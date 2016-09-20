@@ -39,6 +39,66 @@ class GaussEncoder(object):
         return -0.5*kl.sum(axis=1)
 
 
+
+# Regular Encoder for Mix of Gaussian Latent Variables  
+class GaussMixEncoder(object):
+    def __init__(self, rng, input, batch_size, in_size, latent_size, W_mix = None, W_mu1 = None, W_mu2 = None, W_sigma1 = None, W_sigma2 = None):
+        self.srng = theano.tensor.shared_randomstreams.RandomStreams(rng.randint(999999))
+        self.input = input
+
+        # setup variational params                               
+        ### NOTE: Hardcode two components for now / no prior on the mixture weights     
+        if W_mu1 is None:
+            W_values = np.asarray(0.01 * rng.standard_normal(size=(in_size, latent_size)), dtype=theano.config.floatX)
+            W_mu1 = theano.shared(value=W_values, name='W_mu1')
+        if W_mu2 is None:
+            W_values = np.asarray(0.01 * rng.standard_normal(size=(in_size, latent_size)), dtype=theano.config.floatX)
+            W_mu2 = theano.shared(value=W_values, name='W_mu2')
+        if W_sigma1 is None:
+            W_values = np.asarray(0.01 * rng.standard_normal(size=(in_size, latent_size)), dtype=theano.config.floatX)
+            W_sigma1 = theano.shared(value=W_values, name='W_sigma1')
+        if W_sigma2 is None:
+            W_values = np.asarray(0.01 * rng.standard_normal(size=(in_size, latent_size)), dtype=theano.config.floatX)
+            W_sigma2 = theano.shared(value=W_values, name='W_sigma2')
+        self.W_mu1 = W_mu1
+        self.W_mu2 = W_mu2
+        self.W_sigma1 = W_sigma1
+        self.W_sigma2 = W_sigma2
+
+        # setup mixture weights params
+        if W_mix is None:
+            W_values = np.asarray(0.01 * rng.standard_normal(size=(in_size, 2)), dtype=theano.config.floatX)
+            W_mix = theano.shared(value=W_values, name='W_mix')
+        self.W_mix = W_mix
+
+        # compute Normal params   
+        mu1 = T.dot(self.input, self.W_mu1)
+        log_sigma1 = T.dot(self.input, self.W_sigma1)
+        mu2 = T.dot(self.input, self.W_mu2)
+        log_sigma2 = T.dot(self.input, self.W_sigma2)
+ 
+        self.mu = [mu1, mu2]
+        self.log_sigma = [log_sigma1, log_sigma2]
+
+        # compute weights
+        self.mixWeights = Softmax( T.dot(self.input, self.W_mix) )
+
+        # draw mix component
+        ### NOTE: Drawing only one component for the whole batch
+        mix_comp = self.srng.multinomial( size=(1,), n=1, pvals=self.mixWeights )        
+
+        # draw gauss sample
+        std_norm_samples = T.cast(self.srng.normal(size=(batch_size, latent_size), avg=0.0, std=1.0), dtype=theano.config.floatX)
+        self.latent_vars = self.mu[mix_comp] + T.exp(self.log_sigma[mix_comp]) * std_norm_samples
+
+        self.params = [self.W_mu1, self.W_mu2, self.W_sigma1, self.W_sigma2]
+
+    # MC approx
+    def calc_kl_divergence(self, prior):
+        ### to do
+        return kl.sum(axis=1)
+
+
 # Encoder for Gaussian and Label Latent Variables
 class Gauss_Encoder_w_Labels(GaussEncoder):
     def __init__(self, rng, input, batch_size, in_size, label_size, latent_size, label_fn, W_y = None, b_y = None, W_mu = None, W_sigma = None):
