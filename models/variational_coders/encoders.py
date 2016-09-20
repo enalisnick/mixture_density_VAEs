@@ -32,9 +32,9 @@ class GaussEncoder(object):
         self.params = [self.W_mu, self.W_sigma]
 
     # Assumes diagonal Gaussians                                                                                              
-    def calc_kl_divergence(self, prior_mu, prior_sigma):
-        kl = -T.log(prior_sigma**2)
-        kl += -(T.exp(2*self.log_sigma) + (self.mu - prior_mu)**2)/(prior_sigma**2)
+    def calc_kl_divergence(self, prior):
+        kl = -T.log(prior['sigma']**2)
+        kl += -(T.exp(2*self.log_sigma) + (self.mu - prior['mu'])**2)/(prior['sigma']**2)
         kl += 2*self.log_sigma + 1.
         return -0.5*kl.sum(axis=1)
 

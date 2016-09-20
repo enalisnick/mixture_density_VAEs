@@ -3,9 +3,10 @@ import os
 from os.path import join as pjoin
 import theano
 
+from models.Gauss_VAE import Gaussian_VAE
 from models.neural_net.layers import HiddenLayer, ResidualHiddenLayer
 from models.neural_net.activation_fns import ReLU, Sigmoid, Identity
-from train_scripts.train_gauss_VAE import train_and_eval_gaussian_vae
+from train_scripts.train_VAE import train_and_eval_vae
 from utils.utils import mkdirs
 
 def build_argparser():
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     parser = build_argparser()
     args = parser.parse_args()
     args_dict = vars(args)
-    args_string = ''.join('{}_{}_'.format(key, val) for key, val in sorted(args_dict.items()) if key not in ['experiment_dir','lookahead','max_epoch'])[:-1]
+    id_string = 'gauss_vae_'.join('{}_{}_'.format(key, val) for key, val in sorted(args_dict.items()) if key not in ['experiment_dir','lookahead','max_epoch','batch_size'])[:-1]
 
     # Check the parameters are correct.
     if args.nb_hidden_layers < args.skip and args.nb_hidden_layers > 0:
@@ -81,9 +82,10 @@ if __name__ == '__main__':
     elif args.hidden_type == "residual":
         hidden_layer_types = [HiddenLayer] * (args.nb_hidden_layers - args.skip) + [ResidualHiddenLayer] * (args.skip)
 
+    modelType = Gaussian_VAE
+
     # P(Z) PARAMS
-    prior_mu = 0.
-    prior_sigma = 1.
+    prior = {'mu': 0., 'sigma': 1.}
 
     # DATA PARAMS
     # Create datasets and experiments folders is needed.
@@ -101,18 +103,18 @@ if __name__ == '__main__':
     print "Datasets dir: {}".format(os.path.abspath(dataset_dir))
     print "Experiment dir: {}".format(os.path.abspath(args.experiment_dir))
 
-    train_and_eval_gaussian_vae(
+    train_and_eval_vae(
         dataset=dataset,
         hidden_layer_sizes=hidden_layer_sizes,
         hidden_layer_types = hidden_layer_types,
         latent_size=args.latent_size,
         activations=activations,
-        prior_mu = prior_mu,
-        prior_sigma = prior_sigma,
+        modelType=modelType,
+        prior=prior,
         n_epochs=args.max_epoch,
         batch_size=args.batch_size,
         lookahead=args.lookahead,
         adam_lr=args.learning_rate,
         experiment_dir=args.experiment_dir,
-        output_file_base_name = args_string,
+        output_file_base_name = id_string,
         random_seed=random_seed)

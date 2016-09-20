@@ -8,21 +8,20 @@ from os.path import join as pjoin
 import theano
 import theano.tensor as T
 
-from models.Gauss_VAE import Gaussian_VAE
 from models.neural_net.activation_fns import Sigmoid, Identity, Softmax
 from models.neural_net.loss_fns import *
 from utils.load_data import load_mnist, load_mnist_w_rotations, load_svhn_pca
 from opt_fns import get_adam_updates
 
 ### Train & Evaluate ###
-def train_and_eval_gaussian_vae(
+def train_and_eval_vae(
     dataset,
     hidden_layer_sizes,
     hidden_layer_types,
     latent_size,
     activations,
-    prior_mu,
-    prior_sigma,
+    modelType,
+    prior,
     n_epochs,
     batch_size,
     lookahead,
@@ -81,13 +80,13 @@ def train_and_eval_gaussian_vae(
     index = T.lscalar()    # index to a [mini]batch
     x = T.matrix('x') 
 
-    # construct the Gaussian Variational Autoencoder
-    model = Gaussian_VAE(rng=rng, input=x, batch_size=batch_size, layer_sizes=layer_sizes, layer_types=hidden_layer_types, 
+    # construct the Variational Autoencoder
+    model = modelType(rng=rng, input=x, batch_size=batch_size, layer_sizes=layer_sizes, layer_types=hidden_layer_types, 
                          activations=activations, latent_size=latent_size, out_activation=out_activation)
 
     # Build the expresson for the cost function.
     data_ll_term = neg_log_likelihood_fn(x, model.x_recon) 
-    kl = model.calc_kl_divergence(prior_mu=prior_mu, prior_sigma=prior_sigma)
+    kl = model.calc_kl_divergence(prior)
 
     # Compose into final costs
     cost = T.mean( data_ll_term + kl )
@@ -122,11 +121,11 @@ def train_and_eval_gaussian_vae(
     start_time = time.clock()
 
     # check if results file already exists, if so, append a number                                                      
-    results_file_name = pjoin(experiment_dir, "gauss_vae_results_"+output_file_base_name+".txt")
+    results_file_name = pjoin(experiment_dir, "results_"+output_file_base_name+".txt")
     file_exists_counter = 0
     while os.path.isfile(results_file_name):
         file_exists_counter += 1
-        results_file_name = pjoin(experiment_dir, "gauss_vae_results_"+output_file_base_name+"_"+str(file_exists_counter)+".txt")
+        results_file_name = pjoin(experiment_dir, "results_"+output_file_base_name+"_"+str(file_exists_counter)+".txt")
     if file_exists_counter > 0:
         output_file_base_name += "_"+str(file_exists_counter)
     results_file = open(results_file_name, 'w')
@@ -179,7 +178,7 @@ def train_and_eval_gaussian_vae(
             results += " ***"
             # Save progression
             best_params = [param.get_value().copy() for param in model.params]
-            cPickle.dump(best_params, open(pjoin(experiment_dir, 'gauss_vae_params_'+output_file_base_name+'.pkl'), 'wb'), protocol=cPickle.HIGHEST_PROTOCOL)
+            cPickle.dump(best_params, open(pjoin(experiment_dir, 'params_'+output_file_base_name+'.pkl'), 'wb'), protocol=cPickle.HIGHEST_PROTOCOL)
         elif epoch_counter-best_iter > lookahead:
             stop_training = True
 
