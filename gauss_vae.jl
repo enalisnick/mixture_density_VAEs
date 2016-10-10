@@ -9,13 +9,13 @@ function sigmoid(x)
   return 1./(1 + exp(-x))
 end
 
-function init_params(in_size, hidden_size, latent_size, std=0.0001)
+function init_params(in_size, hidden_size, latent_size, std=0.01)
   # encoder params
   w_encoder = [std*randn(in_size, hidden_size), std*randn(hidden_size, latent_size), std*randn(hidden_size, latent_size)]
   b_encoder = [zeros(1, hidden_size), zeros(1, latent_size), zeros(1, latent_size)]
 
   # decoder params
-  w_decoder = Any[randn(latent_size, hidden_size), randn(hidden_size, in_size)]
+  w_decoder = Any[std*randn(latent_size, hidden_size), std*randn(hidden_size, in_size)]
   b_decoder = Any[zeros(1, hidden_size), zeros(1, in_size)]
 
   return Dict("w_encoder"=>w_encoder, "b_encoder"=>b_encoder, "w_decoder"=>w_decoder, "b_decoder"=>b_decoder)
@@ -34,6 +34,9 @@ function fprop(params, x)
   h2 = relu(z*params["w_decoder"][1] .+ params["b_decoder"][1])
   x_recon = sigmoid(h2*params["w_decoder"][2] .+ params["b_decoder"][2])
 
+  # clip the reconstruction to prevent NaN
+  x_recon = min(max(x_recon, .000001), .999999)
+
   return x_recon, post_mu, exp(post_log_sigma)
 end
 
@@ -49,12 +52,12 @@ function elbo(params, x, prior)
   x_recon, post_mu, post_sigma = fprop(params, x)
 
   # likelihood term
-  expected_ll = sum(x .* log(x_recon) + (1-x) .* log(1-x_recon), 2)
+  expected_nll = sum(-x .* log(x_recon) - (1-x) .* log(1-x_recon), 2)
 
   # kl divergence term
   kld = gaussKLD(prior["mu"], prior["sigma"], post_mu, post_sigma)
 
-  return mean(expected_ll - kld)
+  return mean(expected_nll + kld)
 end
 
 function trainVAE(data, params, hyperParams)
@@ -79,30 +82,31 @@ function trainVAE(data, params, hyperParams)
 
       # update encoder
       for param_idx in 1:3
-        params["w_encoder"][param_idx] += hyperParams["lr"] * grads["w_encoder"][param_idx]
-        params["b_encoder"][param_idx] += hyperParams["lr"] * grads["b_encoder"][param_idx]
+        params["w_encoder"][param_idx] -= hyperParams["lr"] * grads["w_encoder"][param_idx]
+        params["b_encoder"][param_idx] -= hyperParams["lr"] * grads["b_encoder"][param_idx]
       end
 
       # update decoder
       for param_idx in 1:2
-        params["w_decoder"][param_idx] += hyperParams["lr"] * grads["w_decoder"][param_idx]
-        params["b_decoder"][param_idx] += hyperParams["lr"] * grads["b_decoder"][param_idx]
+        params["w_decoder"][param_idx] -= hyperParams["lr"] * grads["w_decoder"][param_idx]
+        params["b_decoder"][param_idx] -= hyperParams["lr"] * grads["b_decoder"][param_idx]
       end
 
     end
-    @printf "Epoch %d. ELBO: %.3f \n" epoch_idx elbo_tracker/nBatches
+    @printf "Epoch %d. Neg. ELBO: %.3f \n" epoch_idx elbo_tracker/nBatches
   end
 
   return params
 end
 
 function run_VAE()
-  # load MNIST
+  # load MNIST (values in [0,255])
   data = transpose(traindata()[1])
 
-  # shuffle and reduce dataset
+  # shuffle, normalized, and reduce dataset
   shuffle(vec(data))
-  data = data[1:10000,:]
+  data /= 255
+  #data = data[1:10000,:]
 
   # set architecture parameters
   hidden_size = 500
@@ -116,5 +120,3 @@ function run_VAE()
 end
 
 run_VAE()
-
-
