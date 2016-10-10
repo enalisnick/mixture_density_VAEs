@@ -60,6 +60,28 @@ function elbo(params, x, prior)
   return mean(expected_nll + kld)
 end
 
+function adamUpdate(params, grads, adamParams, b1=.95, b2=.999, e=1e-8)
+  adamParams["t"] += 1
+
+  for paramType in ["w_encoder", "b_encoder", "w_decoder", "b_decoder"]
+    if contains(paramType,"encoder") idx_limit = 3 else idx_limit = 2 end
+    for param_idx in 1:idx_limit
+      # mean term
+      adamParams["m"][paramType][param_idx] = b1*adamParams["m"][paramType][param_idx] + (1-b1)*grads[paramType][param_idx]
+      m_hat = adamParams["m"][paramType][param_idx] ./ (1-b1.^adamParams["t"])
+
+      # variance term
+      adamParams["v"][paramType][param_idx] = b2*adamParams["v"][paramType][param_idx] + (1-b2)*grads[paramType][param_idx].^2
+      v_hat = adamParams["v"][paramType][param_idx] ./ (1-b2.^adamParams["t"])
+
+      # update model param
+      params[paramType][param_idx] -= adamParams["lr"] * m_hat./(sqrt(v_hat) + e)
+    end
+  end
+
+  return params
+end
+
 function trainVAE(data, params, hyperParams)
   N,d = size(data)
   nBatches = div(N,hyperParams["batchSize"])
@@ -80,17 +102,8 @@ function trainVAE(data, params, hyperParams)
       # get elbo gradients
       grads = elbo_grad(params, x, hyperParams["prior"])
 
-      # update encoder
-      for param_idx in 1:3
-        params["w_encoder"][param_idx] -= hyperParams["lr"] * grads["w_encoder"][param_idx]
-        params["b_encoder"][param_idx] -= hyperParams["lr"] * grads["b_encoder"][param_idx]
-      end
-
-      # update decoder
-      for param_idx in 1:2
-        params["w_decoder"][param_idx] -= hyperParams["lr"] * grads["w_decoder"][param_idx]
-        params["b_decoder"][param_idx] -= hyperParams["lr"] * grads["b_decoder"][param_idx]
-      end
+      # perform AdaM update
+      params = adamUpdate(params, grads, hyperParams["adamParams"])
 
     end
     @printf "Epoch %d. Neg. ELBO: %.3f \n" epoch_idx elbo_tracker/nBatches
@@ -114,7 +127,8 @@ function run_VAE()
   vae_params = init_params(size(data,2), hidden_size, latent_size)
 
   # set hyperparams
-  hyperParams = Dict("lr"=>0.01, "prior"=>Dict("mu"=>0., "sigma"=>1.), "nEpochs"=>50, "batchSize"=>100)
+  adamParams = Dict("lr"=>0.0001, "m"=>init_params(size(data,2), hidden_size, latent_size, 0.), "v"=>init_params(size(data,2), hidden_size, latent_size, 0.), "t"=>0)
+  hyperParams = Dict("adamParams"=>adamParams, "prior"=>Dict("mu"=>0., "sigma"=>1.), "nEpochs"=>50, "batchSize"=>100)
 
   final_vae_params = trainVAE(data, vae_params, hyperParams)
 end
