@@ -1,89 +1,76 @@
-"""
-Gaussian Variational Autoencoder
-"""
-module MNIST
+using MNIST
 using AutoGrad
-using GZip
-using Main
-using Compat
 
-function predict(w, x)
-    i = 1
-    while i+2 < length(w)
-        x = max(0, w[i]*x .+ w[i+1])
-        i += 2
+function init_params(in_size, hidden_size, latent_size, std=0.0001)
+  # encoder params
+  w_encoder = [std*randn(in_size, hidden_size), std*randn(hidden_size, latent_size), std*randn(hidden_size, latent_size)]
+  b_encoder = [zeros(hidden_size), zeros(latent_size), zeros(latent_size)]
+
+  # decoder params
+  w_decoder = Any[randn(latent_size, hidden_size), randn(hidden_size, in_size)]
+  b_decoder = Any[zeros(hidden_size), zeros(in_size)]
+
+  return Dict("w_encoder"=>w_encoder, "b_encoder"=>b_encoder, "w_decoder"=>w_decoder, "b_decoder"=>b_decoder)
+end
+
+function elbo(x, prior)
+
+end
+
+function trainGaussVAE(data, params, hyperParams)
+  N,d = size(data)
+  nBatches = N/hyperParams("batchSize")
+
+  # get the derivatives via autograd
+  elbo_grad = grad(elbo)
+
+  for epoch_idx in 1:hyperParams["nEpochs"]
+    elbo_tracker = 0.
+    for batch_idx in 1:nBatches
+
+      # compute elbo
+      elbo_tracker += elbo(params, x, hyperParams["prior"])
+
+      # get elbo gradients
+      grads = elbo_grad(params, data[(batch_idx-1)*hyperParams("batchSize"):batch_idx*hyperParams("batchSize")], hyperParams["prior"])
+
+      # update encoder
+      for param_idx in 1:3
+        params["w_encdoer"][param_idx] + hyperParams["lr"] * grads["w_encdoer"][param_idx]
+        params["b_encdoer"][param_idx] + hyperParams["lr"] * grads["b_encdoer"][param_idx]
+      end
+
+      # update decoder
+      for param_idx in 1:2
+        params["w_decoder"][param_idx] + hyperParams["lr"] * grads["w_decoder"][param_idx]
+        params["b_decoder"][param_idx] + hyperParams["lr"] * grads["b_decoder"][param_idx]
+      end
+
     end
-    return w[i]*x .+ w[i+1]
+    println("Epoch %d. ELBO: %.3f", [epoch_idx, elbo_tracker/nBatches])
+  end
+
+  return params
 end
 
-function loss(w, x, ygold)
-    ypred = predict(w, x)
-    ynorm = ypred .- log(sum(exp(ypred),1))
-    -sum(ygold .* ynorm) / size(ygold,2)
+function run_VAE()
+  # load MNIST
+  data = transpose(traindata()[1])
+
+  # shuffle and reduce dataset
+  shuffle(vec(data))
+  data = data[1:10000,:]
+
+  # set architecture parameters
+  hidden_size = 500
+  latent_size = 25
+  vae_params = init_params(size(data,2), hidden_size, latent_size)
+
+  # set hyperparams
+  hyperParams = Dict("lr"=>0.01, "prior"=>Dict("mu"=>0., "sigma"=>1.), "nEpochs"=>50, "batchSize"=>100)
+  final_vae_params = trainGaussVAE(data, vae_params, hyperParams)
 end
 
-function accuracy(w, x, ygold)
-    ypred = predict(w, x)
-    sum((ypred .== maximum(ypred,1)) & (ygold .== maximum(ygold,1))) / size(ygold,2)
-end
+run_VAE()
 
-function train(w=weights(); lr=.1, epochs=20)
-    isdefined(MNIST,:dtrn) || loaddata()
-    println((0, :ltrn, loss(w,xtrn,ytrn), :ltst, loss(w,xtst,ytst), :atrn, accuracy(w,xtrn,ytrn), :atst, accuracy(w,xtst,ytst)))
-    gradfun = grad(loss)
-    for epoch=1:epochs
-        for (x,y) in dtrn
-            g = gradfun(w, x, y)
-            for i in 1:length(w)
-                w[i] -= lr * g[i]
-            end
-        end
-        println((epoch, :ltrn, loss(w,xtrn,ytrn), :ltst, loss(w,xtst,ytst), :atrn, accuracy(w,xtrn,ytrn), :atst, accuracy(w,xtst,ytst)))
-    end
-    return w
-end
 
-function weights(h...; seed=nothing)
-    seed==nothing || srand(seed)
-    w = Any[]
-    x = 28*28
-    for y in [h..., 10]
-        push!(w, convert(Array{Float32}, 0.1*randn(y,x)))
-        push!(w, zeros(Float32, y))
-        x = y
-    end
-    return w
-end
-
-function loaddata()
-    info("Loading data...")
-    global xtrn, xtst, ytrn, ytst, dtrn
-    xshape(a)=reshape(a./255f0,784,div(length(a),784))
-    yshape(a)=(a[a.==0]=10; full(sparse(convert(Vector{Int},a),1:length(a),1f0)))
-    xtrn = xshape(gzload("train-images-idx3-ubyte.gz")[17:end])
-    xtst = xshape(gzload("t10k-images-idx3-ubyte.gz")[17:end])
-    ytrn = yshape(gzload("train-labels-idx1-ubyte.gz")[9:end])
-    ytst = yshape(gzload("t10k-labels-idx1-ubyte.gz")[9:end])
-    dtrn = minibatch(xtrn, ytrn, 100)
-    info("Loading done...")
-end
-
-function gzload(file; path=joinpath(AutoGrad.datapath,file), url="http://yann.lecun.com/exdb/mnist/$file")
-    isfile(path) || download(url, path)
-    f = gzopen(path)
-    a = @compat read(f)
-    close(f)
-    return(a)
-end
-
-function minibatch(x, y, batchsize)
-    data = Any[]
-    nx = size(x,2)
-    for i=1:batchsize:nx
-        j=min(i+batchsize-1,nx)
-        push!(data, (x[:,i:j], y[:,i:j]))
-    end
-    return data
-end
-
-end # module
