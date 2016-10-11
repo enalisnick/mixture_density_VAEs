@@ -66,7 +66,7 @@ end
 
 ### KLD Terms ###
 function gaussPDF(x, mu, sigma)
-  return sum(1./sqrt(2*3.1416*sigma.^2) .* exp(-.5*(x - mu).^2 ./ sigma.^2), 2)
+  return prod(1./sqrt(2*3.1416*sigma.^2) .* exp(-.5*(x - mu).^2 ./ sigma.^2), 2)
 end
 
 function gaussMixPDF(x, params)
