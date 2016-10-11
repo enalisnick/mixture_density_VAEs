@@ -1,10 +1,10 @@
 
 # AdaM: https://arxiv.org/pdf/1412.6980v8.pdf
-function adamUpdate(params, grads, adamParams, b1=.95, b2=.999, e=1e-8)
+function adamUpdate(params, grads, adamParams, encLimit=3, decLimit=2, b1=.95, b2=.999, e=1e-8)
   adamParams["t"] += 1
 
   for paramType in ["w_encoder", "b_encoder", "w_decoder", "b_decoder"]
-    if contains(paramType,"encoder") idx_limit = 3 else idx_limit = 2 end
+    if contains(paramType,"encoder") idx_limit = encLimit else idx_limit = decLimit end
     for param_idx in 1:idx_limit
       # mean term
       adamParams["m"][paramType][param_idx] = b1*adamParams["m"][paramType][param_idx] + (1-b1)*grads[paramType][param_idx]
