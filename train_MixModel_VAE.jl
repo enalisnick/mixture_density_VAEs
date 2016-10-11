@@ -1,7 +1,7 @@
 using MNIST
 
 include("utils/optimizers.jl")
-include("gaussMMVAE.jl")
+include("models/gaussMMVAE.jl")
 
 function elbo(params, x, prior)
   # prop through autoencoder
@@ -20,9 +20,6 @@ function trainVAE(data, params, hyperParams)
   N,d = size(data)
   nBatches = div(N,hyperParams["batchSize"])
 
-  # get gradient
-  elbo_grad = custom_grad(elbo)
-
   for epoch_idx in 1:hyperParams["nEpochs"]
     elbo_tracker = 0.
     for batch_idx in 1:nBatches
@@ -34,10 +31,10 @@ function trainVAE(data, params, hyperParams)
       elbo_tracker += elbo(params, x, hyperParams["prior"])
 
       # get elbo gradients
-      grads = elbo_grad(params, x, hyperParams["prior"])
+      #grads = elbo_grad(params, x, hyperParams["prior"])
 
       # perform AdaM update
-      params = adamUpdate(params, grads, hyperParams["adamParams"])
+      #params = adamUpdate(params, grads, hyperParams["adamParams"])
 
     end
     @printf "Epoch %d. Neg. ELBO: %.3f \n" epoch_idx elbo_tracker/nBatches
@@ -64,7 +61,7 @@ function main()
   # set hyperparams
   adamParams = Dict("lr"=>0.0001, "m"=>init_params(size(data,2), hidden_size, latent_size, n_components, 0.),
                     "v"=>init_params(size(data,2), hidden_size, latent_size, n_components, 0.), "t"=>0)
-  hyperParams = Dict("adamParams"=>adamParams, "prior"=>[Dict("mu"=>-2., "sigma"=>1.), Dict("mu"=>2., "sigma"=>1.)], "nEpochs"=>50, "batchSize"=>100)
+  hyperParams = Dict("adamParams"=>adamParams, "prior"=>Dict("weights"=>transpose([.5, .5]), "mu"=>[-2., 2.], "sigma"=>[1., 1.]), "nEpochs"=>50, "batchSize"=>100)
 
   final_vae_params = trainVAE(data, vae_params, hyperParams)
 end
