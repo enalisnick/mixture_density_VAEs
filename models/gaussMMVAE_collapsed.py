@@ -42,8 +42,8 @@ class GaussMMVAE_collapsed(object):
         return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d']]), 
                 'mu':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
                 'sigma':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
-                'kumar_a':[init_mlp([hyperParams['hidden_d'], 1]) for k in xrange(self.K)],
-                'kumar_b':[init_mlp([hyperParams['hidden_d'], 1]) for k in xrange(self.K)]}
+                'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1]),                
+                'kumar_b':init_mlp([hyperParams['hidden_d'], self.K-1])}
 
 
     def init_decoder(self, hyperParams):
@@ -65,17 +65,49 @@ class GaussMMVAE_collapsed(object):
         for k in xrange(self.K)
             self.mu.append(mlp(h1, self.encoder_params['mu'][k]))
             self.sigma.append(tf.exp(mlp(h1, self.encoder_params['sigma'][k])))
-            self.kumar_a.append(tf.exp(mlp(h1, self.encoder_params['kumar_a'][k])))
-            self.kumar_b.append(tf.exp(mlp(h1, self.encoder_params['kumar_b'][k])))
             self.z.append(self.mu[-1] + self.sigma[-1] * tf.random_normal(tf.shape(self.sigma[-1])))
             x_recon_linear.append(self.z[-1], self.decoder_params)
+
+        self.kumar_a = tf.exp(mlp(h1, self.encoder_params['kumar_a']))
+        self.kumar_b = tf.exp(mlp(h1, self.encoder_params['kumar_b']))
 
         return x_recon_linear
 
 
-    def get_ELBO(self):
-        logLike = []
-        for k in xrange(self.K):
-            logLike.append(compute_nll(self.X, self.x_recons_linear[k]))
+    def compose_stick_segments(self, v):
+        #initializer = ( tf.ones((tf.shape(v,1),1)), tf.zeros((tf.shape(v,1),1)) )
+        #return tf.scan( lambda a, _:  )
 
-        return elbo
+        segments = []
+        remaining_stick = [tf.ones((tf.shape(v,1),1))]
+        for i in xrange(self.K-1):
+            curr_v = tf.slice(v, [0, i], [-1, -1])
+            segments.append( curr_v * remaining_stick )
+            remaining_stick.append( (1-curr_v) * remaining_stick[-1] )
+        segments.append(remaining_stick[-1])
+
+        return segments
+
+    def get_ELBO(self):
+        
+        # compute Kumaraswamy means
+        v_means = tf.exp( tf.log(self.kumar_b) + tf.lbeta([1+1./self.kumar_a, self.kumar_b]))
+
+        # compute Kumaraswamy samples
+        uni_samples = tf.random_normal(tf.shape(v_means), minval=1e-8, maxval=1-1e-8) 
+        v_samples = tf.pow(1-tf.pow(uni_samples, 1./self.kumar_b), 1./self.kumar_a)
+
+        # compose into stick segments using pi = v \prod (1-v)
+        pi_means = self.compose_stick_segments(v_mean)
+        pi_samples = self.compose_stick_segments(v_samples)
+
+        # compose elbo
+        lls = []
+        for k in xrange(self.K):
+            lls.append( compute_nll(self.X, self.x_recons_linear[k]) + gauss_cross_entropy(self.mu[k], self.sigma[k], self.prior['mu'][k], self.prior['sigma'][k]) )
+
+        elbo *= pi_means                                
+        elbo -= compute_pi_kld(self.kumar_a, self.kumar_b, self.prior['dirichlet_alpha'])
+        elbo -= MCmixtureEntropy(pi_samples, self.z)
+        
+        return tf.reduce_mean(elbo, 0)
