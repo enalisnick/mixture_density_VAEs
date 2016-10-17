@@ -121,16 +121,14 @@ class GaussMMVAE(object):
 
 
     def compose_stick_segments(self, v):
-        #initializer = ( tf.ones((tf.shape(v,1),1)), tf.zeros((tf.shape(v,1),1)) )
-        #return tf.scan( lambda a, _:  )
 
         segments = []
-        remaining_stick = [tf.ones((tf.shape(v)[0],1))]
+        self.remaining_stick = [tf.ones((tf.shape(v)[0],1))]
         for i in xrange(self.K-1):
             curr_v = tf.slice(v, [0, i], [-1, -1])
-            segments.append( tf.mul(curr_v, remaining_stick) )
-            remaining_stick.append( tf.mul(1-curr_v, remaining_stick[-1]) )
-        segments.append(remaining_stick[-1])
+            segments.append( tf.mul(curr_v, self.remaining_stick[-1]) )
+            self.remaining_stick.append( tf.mul(1-curr_v, self.remaining_stick[-1]) )
+        segments.append(self.remaining_stick[-1])
 
         return segments
 
@@ -140,14 +138,14 @@ class GaussMMVAE(object):
         b_inv = tf.pow(self.kumar_b,-1)
 
         # compute Kumaraswamy means
-        v_means = tf.exp(tf.log(self.kumar_b) + tf.lbeta(tf.concat(1, [1.+a_inv, self.kumar_b])))
+        self.v_means = tf.exp(tf.log(self.kumar_b) + tf.lgamma(1.+a_inv) + tf.lgamma(self.kumar_b) - tf.lgamma(1+self.kumar_b+a_inv))
 
         # compute Kumaraswamy samples
-        uni_samples = tf.random_uniform(tf.shape(v_means), minval=1e-8, maxval=1-1e-8) 
+        uni_samples = tf.random_uniform(tf.shape(self.v_means), minval=1e-8, maxval=1-1e-8) 
         v_samples = tf.pow(1-tf.pow(uni_samples, tf.pow(self.kumar_b,-1)), tf.pow(self.kumar_a,-1))
 
         # compose into stick segments using pi = v \prod (1-v)
-        self.pi_means = self.compose_stick_segments(v_means)
+        self.pi_means = self.compose_stick_segments(self.v_means)
         self.pi_samples = self.compose_stick_segments(v_samples)
 
         '''
