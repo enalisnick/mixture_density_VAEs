@@ -38,16 +38,16 @@ def trainVAE(data, vae_hyperParams, hyperParams):
                 x = data[batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
             
                 # perform update
-                _, elbo_val = s.run([optimizer, model.elbo_obj], {X: x})
+                _, elbo_val = s.run([optimizer, model.elbo_obj], {model.X: x})
                 elbo_tracker += elbo_val
 
             print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
         
         # save the parameters
-        encoder_params = [session.run(p) for p in encoder_params['w']] + [session.run(p) for p in encoder_params['b']]
-        decoder_params = [session.run(p) for p in decoder_params['w']] + [session.run(p) for p in decoder_params['b']]
+        #encoder_params = [s.run(p) for p in encoder_params['w']] + [s.run(p) for p in encoder_params['b']]
+        #decoder_params = [s.run(p) for p in decoder_params['w']] + [s.run(p) for p in decoder_params['b']]
     
-    return encoder_params, decoder_params
+    return None, None #encoder_params, decoder_params
 
 
 if __name__ == "__main__":
