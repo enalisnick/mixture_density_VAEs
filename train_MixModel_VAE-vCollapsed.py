@@ -18,14 +18,14 @@ inArgs = flags.FLAGS
 
 ### Training function
 def trainVAE(data, vae_hyperParams, hyperParams):
-    N,d = data.shape()
-    nBatches = N/hperParams['batchSize']
+    N,d = data.shape
+    nBatches = N/hyperParams['batchSize']
 
     # init Mix Density VAE
     model = GaussMMVAE(vae_hyperParams)
 
     # get training op
-    optimizer = tf.train.AdamOptimizer(hyperParams['adamLr']).minimize(model.elbo_obj)
+    optimizer = tf.train.AdamOptimizer(hyperParams['adamLr']).minimize(-model.elbo_obj)
     
     # train
     with tf.Session() as s:
@@ -62,5 +62,5 @@ if __name__ == "__main__":
     # set hyperparameters
     train_hyperParams = {'adamLr':inArgs.adamLr, 'nEpochs':inArgs.nEpochs, 'batchSize':inArgs.batchSize}
 
-    #encParams, decParams = trainVAE(mnist, vae_params, hyperParams)
+    encParams, decParams = trainVAE(mnist, vae_hyperParams, train_hyperParams)
     

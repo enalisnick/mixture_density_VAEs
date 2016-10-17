@@ -18,12 +18,53 @@ def mlp(X, params):
 
 
 def compute_nll(x, x_recon_linear):
-    return tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(x_recon_linear, x), axis=1)
+    return tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(x_recon_linear, x), 1)
 
+
+def gauss_cross_entropy(mu_post, sigma_post, mu_prior, sigma_prior):
+    d = mu_post - mu_prior
+    return tf.reduce_sum((d*d)/(2.*sigma_prior*sigma_prior) + sigma_post*sigma_post, 1)
+
+
+def compute_kumar2beta_kld(a, b, alpha, beta):
+    # compute taylor expansion for E[log (1-v)] term                                                                               
+    kl = 1./(1+a*b) * tf.exp(tf.lbeta(tf.concat(1,[1./a, b])))
+    kl += 1./(2+a*b) * tf.exp(tf.lbeta(tf.concat(1,[2./a, b])))
+    kl += 1./(3+a*b) * tf.exp(tf.lbeta(tf.concat(1,[3./a, b])))
+    kl += 1./(4+a*b) * tf.exp(tf.lbeta(tf.concat(1,[4./a, b])))   
+    kl += 1./(5+a*b) * tf.exp(tf.lbeta(tf.concat(1,[5./a, b])))
+    kl += 1./(6+a*b) * tf.exp(tf.lbeta(tf.concat(1,[6./a, b])))
+    kl += 1./(7+a*b) * tf.exp(tf.lbeta(tf.concat(1,[7./a, b])))
+    kl += 1./(8+a*b) * tf.exp(tf.lbeta(tf.concat(1,[8./a, b])))
+    kl += 1./(9+a*b) * tf.exp(tf.lbeta(tf.concat(1,[9./a, b])))
+    kl += 1./(10+a*b) * tf.exp(tf.lbeta(tf.concat(1,[10./a, b])))
+    kl *= (beta-1)*b
+
+    # use another taylor approx for Digamma function                                                                                     
+    kl += (a-alpha)/a * (-0.57721 - tf.digamma(b) - 1./b)
+    # add normalization constants                                                                                                                         
+    kl += tf.log(a*b) + tf.lbeta(tf.concat(1,[alpha*tf.ones((1,1)), beta*tf.ones((1,1))]))
+
+    # final term                                                                                                  
+    kl += -(b-1)/b
+
+    return kl
+
+def normal_pdf(x, mu, sigma):
+    d = mu - x
+    s2 = sigma*sigma
+    return tf.reduce_prod(tf.exp(d*d/(2.*s2)) * 1./tf.sqrt(2*s2*3.14), 1)
+
+
+def mcMixtureEntropy(pi_samples, z, mu, sigma):
+    s = 0.
+    for k in xrange(len(mu)):
+        s += pi_samples[k] * normal_pdf(z[k], mu[k], sigma[k])
+    return -tf.log(s)
 
 
 ### Gaussian Mixture Model VAE Class
-class GaussMMVAE_collapsed(object):
+class GaussMMVAE(object):
     def __init__(self, hyperParams):
 
         self.X = tf.placeholder("float", [None, hyperParams['input_d']])
@@ -62,11 +103,11 @@ class GaussMMVAE_collapsed(object):
 
         h1 = mlp(self.X, self.encoder_params['base'])
         
-        for k in xrange(self.K)
+        for k in xrange(self.K):
             self.mu.append(mlp(h1, self.encoder_params['mu'][k]))
             self.sigma.append(tf.exp(mlp(h1, self.encoder_params['sigma'][k])))
             self.z.append(self.mu[-1] + self.sigma[-1] * tf.random_normal(tf.shape(self.sigma[-1])))
-            x_recon_linear.append(self.z[-1], self.decoder_params)
+            x_recon_linear.append(mlp(self.z[-1], self.decoder_params))
 
         self.kumar_a = tf.exp(mlp(h1, self.encoder_params['kumar_a']))
         self.kumar_b = tf.exp(mlp(h1, self.encoder_params['kumar_b']))
@@ -79,7 +120,7 @@ class GaussMMVAE_collapsed(object):
         #return tf.scan( lambda a, _:  )
 
         segments = []
-        remaining_stick = [tf.ones((tf.shape(v,1),1))]
+        remaining_stick = [tf.ones((tf.shape(v)[0],1))]
         for i in xrange(self.K-1):
             curr_v = tf.slice(v, [0, i], [-1, -1])
             segments.append( curr_v * remaining_stick )
@@ -88,26 +129,29 @@ class GaussMMVAE_collapsed(object):
 
         return segments
 
+
     def get_ELBO(self):
         
         # compute Kumaraswamy means
-        v_means = tf.exp( tf.log(self.kumar_b) + tf.lbeta([1+1./self.kumar_a, self.kumar_b]))
+        v_means = tf.exp( tf.log(self.kumar_b) + tf.lbeta(tf.concat(1, [1+1./self.kumar_a, self.kumar_b])))
 
         # compute Kumaraswamy samples
-        uni_samples = tf.random_normal(tf.shape(v_means), minval=1e-8, maxval=1-1e-8) 
+        uni_samples = tf.random_uniform(tf.shape(v_means), minval=1e-8, maxval=1-1e-8) 
         v_samples = tf.pow(1-tf.pow(uni_samples, 1./self.kumar_b), 1./self.kumar_a)
 
         # compose into stick segments using pi = v \prod (1-v)
-        pi_means = self.compose_stick_segments(v_mean)
+        pi_means = self.compose_stick_segments(v_means)
         pi_samples = self.compose_stick_segments(v_samples)
 
         # compose elbo
-        lls = []
+        elbo = tf.zeros([tf.size(pi_samples)[0],])
+        tf.Print(elbo)
         for k in xrange(self.K):
-            lls.append( compute_nll(self.X, self.x_recons_linear[k]) + gauss_cross_entropy(self.mu[k], self.sigma[k], self.prior['mu'][k], self.prior['sigma'][k]) )
+            elbo += pi_means[k] * ( compute_nll(self.X, self.x_recons_linear[k]) + gauss_cross_entropy(self.mu[k], self.sigma[k], self.prior['mu'][k], self.prior['sigma'][k]) )
+            if k < self.K-1:
+                elbo -= compute_kumar2beta_kld(tf.slice(self.kumar_a,[0,k],[-1,-1]), tf.slice(self.kumar_a,[0,k],[-1,-1]), \
+                                                   self.prior['dirichlet_alpha'], (self.K-k-1)*self.prior['dirichlet_alpha'])
 
-        elbo *= pi_means                                
-        elbo -= compute_pi_kld(self.kumar_a, self.kumar_b, self.prior['dirichlet_alpha'])
-        elbo -= MCmixtureEntropy(pi_samples, self.z)
+        elbo += mcMixtureEntropy(pi_samples, self.z, self.mu, self.sigma)
         
-        return tf.reduce_mean(elbo, 0)
+        return tf.reduce_mean(elbo)
