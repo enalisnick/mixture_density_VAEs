@@ -140,15 +140,15 @@ class GaussMMVAE(object):
         b_inv = tf.pow(self.kumar_b,-1)
 
         # compute Kumaraswamy means
-        v_means = tf.exp(tf.log(self.kumar_b) + tf.lbeta(tf.concat(1, [1+a_inv, self.kumar_b])))
+        v_means = tf.exp(tf.log(self.kumar_b) + tf.lbeta(tf.concat(1, [1.+a_inv, self.kumar_b])))
 
         # compute Kumaraswamy samples
         uni_samples = tf.random_uniform(tf.shape(v_means), minval=1e-8, maxval=1-1e-8) 
         v_samples = tf.pow(1-tf.pow(uni_samples, tf.pow(self.kumar_b,-1)), tf.pow(self.kumar_a,-1))
 
         # compose into stick segments using pi = v \prod (1-v)
-        pi_means = self.compose_stick_segments(v_means)
-        pi_samples = self.compose_stick_segments(v_samples)
+        self.pi_means = self.compose_stick_segments(v_means)
+        self.pi_samples = self.compose_stick_segments(v_samples)
 
         '''
         # compose elbo
@@ -163,6 +163,8 @@ class GaussMMVAE(object):
 
         elbo += mcMixtureEntropy(pi_samples, self.z, self.mu, self.sigma)
         '''
-        elbo = compute_nll(self.X, self.x_recons_linear[0])
+        elbo = tf.mul(self.pi_means[0], compute_nll(self.X, self.x_recons_linear[0]))
+        for k in xrange(self.K-1):
+            elbo += tf.mul(self.pi_means[k+1], compute_nll(self.X, self.x_recons_linear[k+1]))
         
         return tf.reduce_mean(elbo)

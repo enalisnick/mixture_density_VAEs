@@ -38,7 +38,8 @@ def trainVAE(data, vae_hyperParams, hyperParams):
                 x = data[batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
             
                 # perform update
-                _, elbo_val = s.run([optimizer, model.elbo_obj], {model.X: x})
+                _, elbo_val, pi = s.run([optimizer, model.elbo_obj, model.pi_means], {model.X: x})
+                print pi[0].shape
                 elbo_tracker += elbo_val
 
             print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
