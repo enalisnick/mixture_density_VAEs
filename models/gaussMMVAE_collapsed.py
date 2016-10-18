@@ -53,18 +53,18 @@ def compute_kumar2beta_kld(a, b, alpha, beta):
     return kl
 
 
-def normal_pdf(x, mu, sigma):
+def log_normal_pdf(x, mu, sigma):
     d = mu - x
     d2 = tf.mul(-1., tf.mul(d,d))
     s2 = tf.mul(2., tf.mul(sigma,sigma))
-    return tf.reduce_prod(tf.mul(tf.exp(tf.div(d2,s2)), tf.pow(tf.mul(sigma, 2.506628),-1)), reduction_indices=1, keep_dims=True)
+    return tf.reduce_sum(tf.div(d2,s2) - tf.log(tf.mul(sigma, 2.506628)), reduction_indices=1, keep_dims=True)
 
 
 def mcMixtureEntropy(pi_samples, z, mu, sigma, K):
-    s = tf.mul(pi_samples[0], normal_pdf(z[0], mu[0], sigma[0]))
+    s = tf.mul(pi_samples[0], tf.exp(log_normal_pdf(z[0], mu[0], sigma[0])))
     for k in xrange(K-1):
-        s += tf.mul(pi_samples[k+1], normal_pdf(z[k+1], mu[k+1], sigma[k+1]))
-    return tf.log(s)
+        s += tf.mul(pi_samples[k+1], tf.exp(log_normal_pdf(z[k+1], mu[k+1], sigma[k+1])))
+    return -tf.log(s)
 
 
 ### Gaussian Mixture Model VAE Class
@@ -156,9 +156,6 @@ class GaussMMVAE(object):
             elbo -= compute_kumar2beta_kld(tf.slice(self.kumar_a,[0,k],[-1,-1]), tf.slice(self.kumar_a,[0,k],[-1,-1]), \
                                                self.prior['dirichlet_alpha'], (self.K-k-1)*self.prior['dirichlet_alpha'])
 
-        #self.mc = mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K)
-        #self.elbo = elbo + self.mc
-        #self.xx = elbo
-        elbo -= mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K)
+        elbo += mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K)
 
         return tf.reduce_mean(elbo)
