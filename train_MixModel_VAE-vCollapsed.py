@@ -9,7 +9,7 @@ from models.gaussMMVAE_collapsed import GaussMMVAE
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 3, "number of epochs to train.")
+flags.DEFINE_integer("nEpochs", 20, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 25, "dimensionality of latent variables.")
@@ -33,17 +33,21 @@ def trainVAE(data, vae_hyperParams, hyperParams):
         s.run(tf.initialize_all_variables())
         for epoch_idx in xrange(hyperParams['nEpochs']):
             elbo_tracker = 0.
+            pi_tracker = [0., 0.]
             for batch_idx in xrange(nBatches):
                 
                 # get minibatch
                 x = data[batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
             
                 # perform update
-                _, elbo_val = s.run([optimizer, model.elbo_obj], {model.X: x})
+                _, elbo_val, pi = s.run([optimizer, model.elbo_obj, model.pi_means], {model.X: x})
                 
+                pi_tracker[0] += pi[0].sum()
+                pi_tracker[1] += pi[1].sum()
                 elbo_tracker += elbo_val
 
             print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
+            print "( %.2f, %.2f )" %(pi_tracker[0]/(nBatches*hyperParams['batchSize']), pi_tracker[1]/(nBatches*hyperParams['batchSize']))
         
         # save the parameters
         encoder_params = {'mu':[], 'sigma':[]}

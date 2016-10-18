@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 ### Base neural network                                                                                                                  
-def init_mlp(layer_sizes, std=.1):
+def init_mlp(layer_sizes, std=.01):
     params = {'w':[], 'b':[]}
     for n_in, n_out in zip(layer_sizes[:-1], layer_sizes[1:]):
         params['w'].append(tf.Variable(tf.random_normal([n_in, n_out], stddev=std)))
@@ -87,8 +87,8 @@ class GaussMMVAE(object):
         return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d']]), 
                 'mu':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
                 'sigma':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
-                'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1]),                
-                'kumar_b':init_mlp([hyperParams['hidden_d'], self.K-1])}
+                'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-8),                
+                'kumar_b':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-8)}
 
 
     def init_decoder(self, hyperParams):
@@ -146,7 +146,6 @@ class GaussMMVAE(object):
         # compose into stick segments using pi = v \prod (1-v)
         self.pi_means = self.compose_stick_segments(v_means)
         self.pi_samples = self.compose_stick_segments(v_samples)
-
     
         # compose elbo
         elbo = tf.mul(self.pi_means[0], compute_nll(self.X, self.x_recons_linear[0]) + gauss_cross_entropy(self.mu[0], self.sigma[0], self.prior['mu'][0], self.prior['sigma'][0]))
@@ -154,7 +153,7 @@ class GaussMMVAE(object):
             elbo += tf.mul(self.pi_means[k+1], compute_nll(self.X, self.x_recons_linear[k+1]) \
                                + gauss_cross_entropy(self.mu[k+1], self.sigma[k+1], self.prior['mu'][k+1], self.prior['sigma'][k+1]))
             elbo -= compute_kumar2beta_kld(tf.slice(self.kumar_a,[0,k],[-1,-1]), tf.slice(self.kumar_a,[0,k],[-1,-1]), \
-                                               self.prior['dirichlet_alpha'], (self.K-k-1)*self.prior['dirichlet_alpha'])
+                                               self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
 
         elbo += mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K)
 
