@@ -46,12 +46,14 @@ def trainVAE(data, vae_hyperParams, hyperParams):
             print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
         
         # save the parameters
-        encoder_params = [s.run(p) for p in model.encoder_params['base']['w']] + [s.run(p) for p in model.encoder_params['base']['b']]
-        encoder_params += [s.run(p) for p in model.encoder_params['kumar_a']['w']] + [s.run(p) for p in model.encoder_params['kumar_a']['b']]
-        encoder_params += [s.run(p) for p in model.encoder_params['kumar_b']['w']] + [s.run(p) for p in model.encoder_params['kumar_b']['b']]
-        for k in xrange(vae_hyperParams['K']): encoder_params += [s.run(p) for p in model.encoder_params['mu'][k]['w']] + [s.run(p) for p in model.encoder_params['mu'][k]['b']]
-        for k in xrange(vae_hyperParams['K']): encoder_params += [s.run(p) for p in model.encoder_params['sigma'][k]['w']] + [s.run(p) for p in model.encoder_params['sigma'][k]['b']]
-        decoder_params = [s.run(p) for p in model.decoder_params['w']] + [s.run(p) for p in model.decoder_params['b']]
+        encoder_params = {'mu':[], 'sigma':[]}
+        encoder_params['base'] = {'w':[s.run(p) for p in model.encoder_params['base']['w']], 'b':[s.run(p) for p in model.encoder_params['base']['b']]}
+        encoder_params['kumar_a'] = {'w':[s.run(p) for p in model.encoder_params['kumar_a']['w']], 'b':[s.run(p) for p in model.encoder_params['kumar_a']['b']]}
+        encoder_params['kumar_b'] = {'w':[s.run(p) for p in model.encoder_params['kumar_b']['w']], 'b':[s.run(p) for p in model.encoder_params['kumar_b']['b']]}
+        for k in xrange(vae_hyperParams['K']): 
+            encoder_params['mu'].append({'w':[s.run(p) for p in model.encoder_params['mu'][k]['w']], 'b':[s.run(p) for p in model.encoder_params['mu'][k]['b']]})
+            encoder_params['sigma'].append({'w':[s.run(p) for p in model.encoder_params['sigma'][k]['w']], 'b':[s.run(p) for p in model.encoder_params['sigma'][k]['b']]})
+        decoder_params = {'w':[s.run(p) for p in model.decoder_params['w']], 'b':[s.run(p) for p in model.decoder_params['b']]}
     
     return encoder_params, decoder_params
 
