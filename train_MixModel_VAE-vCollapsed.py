@@ -1,4 +1,5 @@
 import os
+import cPickle as cp
 import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
@@ -8,7 +9,7 @@ from models.gaussMMVAE_collapsed import GaussMMVAE
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 100, "number of epochs to train.")
+flags.DEFINE_integer("nEpochs", 3, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 25, "dimensionality of latent variables.")
@@ -45,10 +46,14 @@ def trainVAE(data, vae_hyperParams, hyperParams):
             print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
         
         # save the parameters
-        #encoder_params = [s.run(p) for p in encoder_params['w']] + [s.run(p) for p in encoder_params['b']]
-        #decoder_params = [s.run(p) for p in decoder_params['w']] + [s.run(p) for p in decoder_params['b']]
+        encoder_params = [s.run(p) for p in model.encoder_params['base']['w']] + [s.run(p) for p in model.encoder_params['base']['b']]
+        encoder_params += [s.run(p) for p in model.encoder_params['kumar_a']['w']] + [s.run(p) for p in model.encoder_params['kumar_a']['b']]
+        encoder_params += [s.run(p) for p in model.encoder_params['kumar_b']['w']] + [s.run(p) for p in model.encoder_params['kumar_b']['b']]
+        for k in xrange(vae_hyperParams['K']): encoder_params += [s.run(p) for p in model.encoder_params['mu'][k]['w']] + [s.run(p) for p in model.encoder_params['mu'][k]['b']]
+        for k in xrange(vae_hyperParams['K']): encoder_params += [s.run(p) for p in model.encoder_params['sigma'][k]['w']] + [s.run(p) for p in model.encoder_params['sigma'][k]['b']]
+        decoder_params = [s.run(p) for p in model.decoder_params['w']] + [s.run(p) for p in model.decoder_params['b']]
     
-    return None, None #encoder_params, decoder_params
+    return encoder_params, decoder_params
 
 
 if __name__ == "__main__":
@@ -64,4 +69,4 @@ if __name__ == "__main__":
     train_hyperParams = {'adamLr':inArgs.adamLr, 'nEpochs':inArgs.nEpochs, 'batchSize':inArgs.batchSize}
 
     encParams, decParams = trainVAE(mnist, vae_hyperParams, train_hyperParams)
-    
+    cp.dump([encParams, decParams], open('mixVAE_params.pkl','wb'), protocol=cp.HIGHEST_PROTOCOL)
