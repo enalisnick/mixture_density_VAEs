@@ -12,7 +12,7 @@ flags.DEFINE_integer("batchSize", 100, "batch size.")
 flags.DEFINE_integer("nEpochs", 20, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
-flags.DEFINE_integer("latent_size", 25, "dimensionality of latent variables.")
+flags.DEFINE_integer("latent_size", 10, "dimensionality of latent variables.")
 flags.DEFINE_integer("K", 2, "number of components in mixture model.")
 inArgs = flags.FLAGS
 
@@ -33,7 +33,7 @@ def trainVAE(data, vae_hyperParams, hyperParams):
         s.run(tf.initialize_all_variables())
         for epoch_idx in xrange(hyperParams['nEpochs']):
             elbo_tracker = 0.
-            pi_tracker = [0., 0.]
+            pi_tracker = [0.]*vae_hyperParams['K']
             for batch_idx in xrange(nBatches):
                 
                 # get minibatch
@@ -42,12 +42,12 @@ def trainVAE(data, vae_hyperParams, hyperParams):
                 # perform update
                 _, elbo_val, pi = s.run([optimizer, model.elbo_obj, model.pi_means], {model.X: x})
                 
-                pi_tracker[0] += pi[0].sum()
-                pi_tracker[1] += pi[1].sum()
+                for k in xrange(vae_hyperParams['K']): pi_tracker[k] += pi[k].sum()
                 elbo_tracker += elbo_val
 
             print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
-            print "( %.2f, %.2f )" %(pi_tracker[0]/(nBatches*hyperParams['batchSize']), pi_tracker[1]/(nBatches*hyperParams['batchSize']))
+            print [pi_tracker[k]/(nBatches*hyperParams['batchSize']) for k in xrange(vae_hyperParams['K'])]
+            print
         
         # save the parameters
         encoder_params = {'mu':[], 'sigma':[]}
@@ -68,7 +68,8 @@ if __name__ == "__main__":
     mnist = input_data.read_data_sets("./MNIST/", one_hot=False)[0].images
 
     # set architecture params
-    vae_hyperParams = {'input_d':mnist.shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, 'prior':{'dirichlet_alpha':1., 'mu':[-2., 2.], 'sigma':[1., 1.]}}
+    vae_hyperParams = {'input_d':mnist.shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, \
+                           'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
     assert len(vae_hyperParams['prior']['mu']) == len(vae_hyperParams['prior']['sigma']) == vae_hyperParams['K']
 
     # set hyperparameters
