@@ -124,7 +124,7 @@ class GaussMMVAE(object):
         segments = []
         self.remaining_stick = [tf.ones((tf.shape(v)[0],1))]
         for i in xrange(self.K-1):
-            curr_v = tf.slice(v, [0, i], [-1, -1])
+            curr_v = v[:,i] #tf.slice(v, [0, i], [-1, -1])
             segments.append( tf.mul(curr_v, self.remaining_stick[-1]) )
             self.remaining_stick.append( tf.mul(1-curr_v, self.remaining_stick[-1]) )
         segments.append(self.remaining_stick[-1])

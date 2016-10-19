@@ -13,7 +13,7 @@ flags.DEFINE_integer("nEpochs", 20, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 10, "dimensionality of latent variables.")
-flags.DEFINE_integer("K", 2, "number of components in mixture model.")
+flags.DEFINE_integer("K", 5, "number of components in mixture model.")
 inArgs = flags.FLAGS
 
 
