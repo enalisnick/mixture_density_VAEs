@@ -9,9 +9,9 @@ from models.gaussMMVAE_collapsed import GaussMMVAE
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 20, "number of epochs to train.")
+flags.DEFINE_integer("nEpochs", 200, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
-flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
+flags.DEFINE_integer("hidden_size", 100, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 10, "dimensionality of latent variables.")
 flags.DEFINE_integer("K", 5, "number of components in mixture model.")
 inArgs = flags.FLAGS
@@ -40,7 +40,7 @@ def trainVAE(data, vae_hyperParams, hyperParams):
                 x = data[batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
             
                 # perform update
-                _, elbo_val, pi = s.run([optimizer, model.elbo_obj, model.pi_means], {model.X: x})
+                _, elbo_val, pi = s.run([optimizer, model.elbo_obj, model.pi_samples], {model.X: x})
                 
                 for k in xrange(vae_hyperParams['K']): pi_tracker[k] += pi[k].sum()
                 elbo_tracker += elbo_val

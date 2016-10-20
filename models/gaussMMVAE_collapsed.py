@@ -124,7 +124,7 @@ class GaussMMVAE(object):
         segments = []
         self.remaining_stick = [tf.ones((tf.shape(v)[0],1))]
         for i in xrange(self.K-1):
-            curr_v = v[:,i] #tf.slice(v, [0, i], [-1, -1])
+            curr_v = tf.expand_dims(v[:,i],1)
             segments.append( tf.mul(curr_v, self.remaining_stick[-1]) )
             self.remaining_stick.append( tf.mul(1-curr_v, self.remaining_stick[-1]) )
         segments.append(self.remaining_stick[-1])
@@ -152,7 +152,7 @@ class GaussMMVAE(object):
         for k in xrange(self.K-1):
             elbo += tf.mul(self.pi_means[k+1], compute_nll(self.X, self.x_recons_linear[k+1]) \
                                + gauss_cross_entropy(self.mu[k+1], self.sigma[k+1], self.prior['mu'][k+1], self.prior['sigma'][k+1]))
-            elbo -= compute_kumar2beta_kld(tf.slice(self.kumar_a,[0,k],[-1,-1]), tf.slice(self.kumar_a,[0,k],[-1,-1]), \
+            elbo -= compute_kumar2beta_kld(tf.expand_dims(self.kumar_a[:,k],1), tf.expand_dims(self.kumar_b[:,k],1), \
                                                self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
 
         elbo += mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K)
