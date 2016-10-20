@@ -9,7 +9,7 @@ from models.gaussMMVAE_collapsed import GaussMMVAE
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 200, "number of epochs to train.")
+flags.DEFINE_integer("nEpochs", 300, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 5, "dimensionality of latent variables.")
@@ -66,6 +66,10 @@ if __name__ == "__main__":
 
     # load MNIST
     mnist = input_data.read_data_sets("./MNIST/", one_hot=False)[0].images
+    
+    # shuffle and reduce
+    np.random.shuffle(mnist)
+    mnist = mnist[:45000,:]
 
     # set architecture params
     vae_hyperParams = {'input_d':mnist.shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, \
