@@ -3,6 +3,7 @@ import cPickle as cp
 import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
+import h5py
 
 from models.gaussMMVAE_collapsed import GaussMMVAE
 
@@ -29,45 +30,56 @@ def trainVAE(data, vae_hyperParams, hyperParams):
     optimizer = tf.train.AdamOptimizer(hyperParams['adamLr']).minimize(-model.elbo_obj)
     
     # train
-    with tf.Session() as s:
-        s.run(tf.initialize_all_variables())
-        for epoch_idx in xrange(hyperParams['nEpochs']):
-            elbo_tracker = 0.
-            pi_tracker = [0.]*vae_hyperParams['K']
-            for batch_idx in xrange(nBatches):
-                
-                # get minibatch
-                x = data[batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
-            
-                # perform update
-                _, elbo_val, pi = s.run([optimizer, model.elbo_obj, model.pi_samples], {model.X: x})
-                
-                for k in xrange(vae_hyperParams['K']): pi_tracker[k] += pi[k].sum()
-                elbo_tracker += elbo_val
+    config = tf.ConfigProto(
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5),
+    # device_count = {'GPU': 2},
+        log_device_placement=True,
+    )
 
-            print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
-            print [pi_tracker[k]/(nBatches*hyperParams['batchSize']) for k in xrange(vae_hyperParams['K'])]
-            print
-        
-        # save the parameters
-        encoder_params = {'mu':[], 'sigma':[]}
-        encoder_params['base'] = {'w':[s.run(p) for p in model.encoder_params['base']['w']], 'b':[s.run(p) for p in model.encoder_params['base']['b']]}
-        encoder_params['kumar_a'] = {'w':[s.run(p) for p in model.encoder_params['kumar_a']['w']], 'b':[s.run(p) for p in model.encoder_params['kumar_a']['b']]}
-        encoder_params['kumar_b'] = {'w':[s.run(p) for p in model.encoder_params['kumar_b']['w']], 'b':[s.run(p) for p in model.encoder_params['kumar_b']['b']]}
-        for k in xrange(vae_hyperParams['K']): 
-            encoder_params['mu'].append({'w':[s.run(p) for p in model.encoder_params['mu'][k]['w']], 'b':[s.run(p) for p in model.encoder_params['mu'][k]['b']]})
-            encoder_params['sigma'].append({'w':[s.run(p) for p in model.encoder_params['sigma'][k]['w']], 'b':[s.run(p) for p in model.encoder_params['sigma'][k]['b']]})
-        decoder_params = {'w':[s.run(p) for p in model.decoder_params['w']], 'b':[s.run(p) for p in model.decoder_params['b']]}
-    
+    with tf.device('/gpu:2'):
+        with tf.Session(config=config) as s:
+            s.run(tf.initialize_all_variables())
+            for epoch_idx in xrange(hyperParams['nEpochs']):
+                elbo_tracker = 0.
+                pi_tracker = [0.]*vae_hyperParams['K']
+                for batch_idx in xrange(nBatches):
+
+                    # get minibatch
+                    x = data[batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
+
+                    # perform update
+                    _, elbo_val, pi = s.run([optimizer, model.elbo_obj, model.pi_samples], {model.X: x})
+
+                    for k in xrange(vae_hyperParams['K']): pi_tracker[k] += pi[k].sum()
+                    elbo_tracker += elbo_val
+
+                print "Epoch %d.  ELBO: %.3f" %(epoch_idx, elbo_tracker/nBatches)
+                print [pi_tracker[k]/(nBatches*hyperParams['batchSize']) for k in xrange(vae_hyperParams['K'])]
+                print
+
+            # save the parameters
+            encoder_params = {'mu':[], 'sigma':[]}
+            encoder_params['base'] = {'w':[s.run(p) for p in model.encoder_params['base']['w']], 'b':[s.run(p) for p in model.encoder_params['base']['b']]}
+            encoder_params['kumar_a'] = {'w':[s.run(p) for p in model.encoder_params['kumar_a']['w']], 'b':[s.run(p) for p in model.encoder_params['kumar_a']['b']]}
+            encoder_params['kumar_b'] = {'w':[s.run(p) for p in model.encoder_params['kumar_b']['w']], 'b':[s.run(p) for p in model.encoder_params['kumar_b']['b']]}
+            for k in xrange(vae_hyperParams['K']):
+                encoder_params['mu'].append({'w':[s.run(p) for p in model.encoder_params['mu'][k]['w']], 'b':[s.run(p) for p in model.encoder_params['mu'][k]['b']]})
+                encoder_params['sigma'].append({'w':[s.run(p) for p in model.encoder_params['sigma'][k]['w']], 'b':[s.run(p) for p in model.encoder_params['sigma'][k]['b']]})
+            decoder_params = {'w':[s.run(p) for p in model.decoder_params['w']], 'b':[s.run(p) for p in model.decoder_params['b']]}
+
     return encoder_params, decoder_params
 
 
 if __name__ == "__main__":
 
-    # load MNIST
-    mnist = input_data.read_data_sets("./MNIST/", one_hot=False)[0].images
-    
-    # shuffle and reduce
+    # # load MNIST
+    # mnist = input_data.read_data_sets("./MNIST/", one_hot=False)[0].images
+    #
+    # # shuffle and reduce
+    # np.random.shuffle(mnist)
+    # mnist = mnist[:45000,:]
+    f = h5py.File('./MNIST/binarized_mnist.h5')
+    mnist = np.concatenate([f['train'], f['valid'], f['test']])
     np.random.shuffle(mnist)
     mnist = mnist[:45000,:]
 
