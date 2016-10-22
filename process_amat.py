@@ -3,16 +3,10 @@ import numpy as np
 
 
 def turn_into_array(file_path):
+    print("Processing ", file_path)
+    data = pd.read_table(file_path, delim_whitespace=True, header=None)
 
-    f = open(file_path, 'rb')
-
-    list_of_lines = []
-    for line in f:
-        list_of_lines.append(map(int, line[:-1].split(' ')))
-
-    dataset_array = np.array(list_of_lines)
-
-    return dataset_array
+    return data.as_matrix()
 
 
 if __name__ == "__main__":
