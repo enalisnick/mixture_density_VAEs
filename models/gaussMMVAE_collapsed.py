@@ -18,7 +18,7 @@ def mlp(X, params):
 
 
 def compute_nll(x, x_recon_linear):
-    return tf.reduce_sum(-tf.nn.sigmoid_cross_entropy_with_logits(x_recon_linear, x), reduction_indices=1, keep_dims=True)
+    return tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(x_recon_linear, x), reduction_indices=1, keep_dims=True)
 
 
 def gauss_cross_entropy(mu_post, sigma_post, mu_prior, sigma_prior):
@@ -60,6 +60,13 @@ def log_normal_pdf(x, mu, sigma):
     return tf.reduce_sum(tf.div(d2,s2) - tf.log(tf.mul(sigma, 2.506628)), reduction_indices=1, keep_dims=True)
 
 
+def log_beta_pdf(v, alpha, beta):
+    return tf.reduce_sum((alpha-1)*tf.log(v) + (beta-1)*tf.log(1-v) - tf.log(beta_fn(alpha,beta)), reduction_indices=1, keep_dims=True)
+
+def log_kumar_pdf(v, a, b):
+    return tf.reduce_sum(tf.mul(a-1, tf.log(v)) + tf.mul(b-1, tf.log(1-tf.pow(v,a))) + tf.log(a) + tf.log(b), reduction_indices=1, keep_dims=True)
+
+
 def mcMixtureEntropy(pi_samples, z, mu, sigma, K):
     s = tf.mul(pi_samples[0], tf.exp(log_normal_pdf(z[0], mu[0], sigma[0])))
     for k in xrange(K-1):
@@ -78,9 +85,11 @@ class GaussMMVAE(object):
         self.encoder_params = self.init_encoder(hyperParams)
         self.decoder_params = self.init_decoder(hyperParams)
 
-        self.x_recons_linear = self.f_prop(hyperParams)
+        self.x_recons_linear = self.f_prop()
 
         self.elbo_obj = self.get_ELBO()
+
+        #self.batch_log_margLL = self.get_log_margLL(hyperParams['batchSize'])
 
 
     def init_encoder(self, hyperParams):
@@ -95,7 +104,7 @@ class GaussMMVAE(object):
         return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d'], hyperParams['input_d']])
 
 
-    def f_prop(self, hyperParams):
+    def f_prop(self):
 
         # init variational params
         self.mu = []
@@ -148,9 +157,9 @@ class GaussMMVAE(object):
         self.pi_samples = self.compose_stick_segments(v_samples)
     
         # compose elbo
-        elbo = tf.mul(self.pi_means[0], compute_nll(self.X, self.x_recons_linear[0]) + gauss_cross_entropy(self.mu[0], self.sigma[0], self.prior['mu'][0], self.prior['sigma'][0]))
+        elbo = tf.mul(self.pi_means[0], -compute_nll(self.X, self.x_recons_linear[0]) + gauss_cross_entropy(self.mu[0], self.sigma[0], self.prior['mu'][0], self.prior['sigma'][0]))
         for k in xrange(self.K-1):
-            elbo += tf.mul(self.pi_means[k+1], compute_nll(self.X, self.x_recons_linear[k+1]) \
+            elbo += tf.mul(self.pi_means[k+1], -compute_nll(self.X, self.x_recons_linear[k+1]) \
                                + gauss_cross_entropy(self.mu[k+1], self.sigma[k+1], self.prior['mu'][k+1], self.prior['sigma'][k+1]))
             elbo -= compute_kumar2beta_kld(tf.expand_dims(self.kumar_a[:,k],1), tf.expand_dims(self.kumar_b[:,k],1), \
                                                self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
@@ -158,3 +167,48 @@ class GaussMMVAE(object):
         elbo += mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K)
 
         return tf.reduce_mean(elbo)
+
+
+    def get_log_margLL(self, batchSize):
+        a_inv = tf.pow(self.kumar_a,-1)
+        b_inv = tf.pow(self.kumar_b,-1)
+
+        # compute Kumaraswamy samples                                                                
+        uni_samples = tf.random_uniform((tf.shape(a_inv)[0], self.K-1), minval=1e-8, maxval=1-1e-8)
+        v_samples = tf.pow(1-tf.pow(uni_samples, b_inv), a_inv)
+
+        # compose into stick segments using pi = v \prod (1-v)                                                     
+        self.pi_samples = self.compose_stick_segments(v_samples)
+
+        # sample a component index
+        #uni_samples = tf.random_uniform((tf.shape(a_inv)[0], self.K), minval=1e-8, maxval=1-1e-8)
+        #gumbel_samples = -tf.log(-tf.log(uni_samples))
+        #component_samples = tf.argmax(tf.log(self.pi_samples) + gumbel_samples, 1)
+
+        # calc likelihood term for chosen components
+        #all_ll = []
+        #ll = tf.zeros((batchSize,1))
+        #for k in xrange(self.K): all_ll.append(-compute_nll(self.X, self.x_recons_linear[k]))
+        #for batch_idx in xrange(batchSize): 
+        #    ll[batch_idx,0] = all_ll[component_samples[batch_idx]][batch_idx,0]
+
+        ll = tf.mul(self.pi_samples[0], -compute_nll(self.X, self.x_recons_linear[0]))
+        for k in xrange(self.K-1): ll += tf.mul(self.pi_samples[k+1], -compute_nll(self.X, self.x_recons_linear[k+1]))
+
+        # calc prior and post terms 
+        log_prior = log_normal_pdf(self.z[0], self.mu[0], self.sigma[0])
+        for k in xrange(self.K-1):
+            log_prior += log_normal_pdf(self.z[k+1], self.mu[k+1], self.sigma[k+1])
+            log_prior += log_beta_pdf(tf.expand_dims(v_samples[:,k],1), self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
+
+        # calc post term
+        log_post = -mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K) + log_kumar_pdf(v_samples, self.kumar_a, self.kumar_b)
+
+        return ll + log_prior - log_post
+
+    def get_samples(self, nImages):
+        samples_from_each_component = []
+        for k in xrange(self.K): 
+            z = self.prior['mu'][k] + tf.mul(self.prior['sigma'][k], tf.random_normal((nImages, tf.shape(self.decoder_params['w'][0])[0]))) 
+            samples_from_each_component.append(mlp(z, self.decoder_params))
+        return samples_from_each_component
