@@ -194,8 +194,9 @@ class GaussMMVAE(object):
             ll[batch_idx,0] = all_ll[component_samples[batch_idx]][batch_idx,0]
         '''
 
-        ll = tf.mul(self.pi_samples[0], -compute_nll(self.X, self.x_recons_linear[0]))
-        for k in xrange(self.K-1): ll += tf.mul(self.pi_samples[k+1], -compute_nll(self.X, self.x_recons_linear[k+1]))
+        ll = tf.mul(self.pi_samples[0], tf.exp(-compute_nll(self.X, self.x_recons_linear[0])))
+        for k in xrange(self.K-1): ll += tf.mul(self.pi_samples[k+1], tf.exp(-compute_nll(self.X, self.x_recons_linear[k+1])))
+        ll = tf.log(ll)
 
         # calc prior and post terms 
         log_prior = log_normal_pdf(self.z[0], self.mu[0], self.sigma[0])
