@@ -180,17 +180,19 @@ class GaussMMVAE(object):
         # compose into stick segments using pi = v \prod (1-v)                                                     
         self.pi_samples = self.compose_stick_segments(v_samples)
 
+        '''
         # sample a component index
-        #uni_samples = tf.random_uniform((tf.shape(a_inv)[0], self.K), minval=1e-8, maxval=1-1e-8)
-        #gumbel_samples = -tf.log(-tf.log(uni_samples))
-        #component_samples = tf.argmax(tf.log(self.pi_samples) + gumbel_samples, 1)
+        uni_samples = tf.random_uniform((tf.shape(a_inv)[0], self.K), minval=1e-8, maxval=1-1e-8)
+        gumbel_samples = -tf.log(-tf.log(uni_samples))
+        component_samples = tf.argmax(tf.log(self.pi_samples) + gumbel_samples, 1)
 
         # calc likelihood term for chosen components
-        #all_ll = []
-        #ll = tf.zeros((batchSize,1))
-        #for k in xrange(self.K): all_ll.append(-compute_nll(self.X, self.x_recons_linear[k]))
-        #for batch_idx in xrange(batchSize): 
-        #    ll[batch_idx,0] = all_ll[component_samples[batch_idx]][batch_idx,0]
+        all_ll = []
+        ll = tf.zeros((batchSize,1))
+        for k in xrange(self.K): all_ll.append(-compute_nll(self.X, self.x_recons_linear[k]))
+        for batch_idx in xrange(batchSize): 
+            ll[batch_idx,0] = all_ll[component_samples[batch_idx]][batch_idx,0]
+        '''
 
         ll = tf.mul(self.pi_samples[0], -compute_nll(self.X, self.x_recons_linear[0]))
         for k in xrange(self.K-1): ll += tf.mul(self.pi_samples[k+1], -compute_nll(self.X, self.x_recons_linear[k+1]))
@@ -210,5 +212,5 @@ class GaussMMVAE(object):
         samples_from_each_component = []
         for k in xrange(self.K): 
             z = self.prior['mu'][k] + tf.mul(self.prior['sigma'][k], tf.random_normal((nImages, tf.shape(self.decoder_params['w'][0])[0]))) 
-            samples_from_each_component.append(mlp(z, self.decoder_params))
+            samples_from_each_component.append( tf.sigmoid(mlp(z, self.decoder_params)) )
         return samples_from_each_component
