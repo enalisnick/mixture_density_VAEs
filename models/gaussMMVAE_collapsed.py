@@ -194,16 +194,29 @@ class GaussMMVAE(object):
         ll = tf.gather_nd(all_ll, component_samples)
         ll = tf.expand_dims(ll,1)
 
-        # calc prior and post terms 
-        log_prior = log_normal_pdf(self.z[0], self.mu[0], self.sigma[0])
-        for k in xrange(self.K-1):
-            log_prior += log_normal_pdf(self.z[k+1], self.mu[k+1], self.sigma[k+1])
-            log_prior += log_beta_pdf(tf.expand_dims(v_samples[:,k],1), self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
+        # calc prior terms
+        all_log_gauss_priors = [] 
+        for k in xrange(self.K):
+            all_log_gauss_priors.append(log_normal_pdf(self.z[k], self.prior['mu'][k], self.prior['sigma'][k]))
+        all_log_gauss_priors = tf.concat(1, all_log_gauss_priors)
+        log_gauss_prior = tf.gather_nd(all_log_gauss_priors, component_samples)
+        log_gauss_prior = tf.expand_dims(log_gauss_prior,1)
+
+        log_beta_prior = log_beta_pdf(tf.expand_dims(v_samples[:,0],1), self.prior['dirichlet_alpha'], (self.K-1)*self.prior['dirichlet_alpha'])
+        for k in xrange(self.K-2):
+            log_beta_prior += log_beta_pdf(tf.expand_dims(v_samples[:,k+1],1), self.prior['dirichlet_alpha'], (self.K-2-k)*self.prior['dirichlet_alpha'])
 
         # calc post term
-        log_post = -mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K) + log_kumar_pdf(v_samples, self.kumar_a, self.kumar_b)
+        log_kumar_post = log_kumar_pdf(v_samples, self.kumar_a, self.kumar_b)
+        
+        all_log_gauss_posts = []
+        for k in xrange(self.K):
+            all_log_gauss_posts.append(log_normal_pdf(self.z[k], self.mu[k], self.sigma[k]))
+        all_log_gauss_posts = tf.concat(1, all_log_gauss_posts)
+        log_gauss_post = tf.gather_nd(all_log_gauss_posts, component_samples)
+        log_gauss_post = tf.expand_dims(log_gauss_post,1)
 
-        return ll + log_prior - log_post
+        return ll + log_beta_prior + log_gauss_prior - log_kumar_post - log_gauss_post
 
     def get_samples(self, nImages):
         samples_from_each_component = []

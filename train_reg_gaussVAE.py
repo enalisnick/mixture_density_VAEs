@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
-from models.gaussMMVAE_collapsed import GaussMMVAE
+from models.gaussVAE import GaussVAE
 from utils.sampling_utils import *
 
 try:
@@ -19,11 +19,10 @@ except ImportError:
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 300, "number of epochs to train.")
+flags.DEFINE_integer("nEpochs", 10, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 3e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
-flags.DEFINE_integer("latent_size", 5, "dimensionality of latent variables.")
-flags.DEFINE_integer("K", 5, "number of components in mixture model.")
+flags.DEFINE_integer("latent_size", 25, "dimensionality of latent variables.")
 flags.DEFINE_string("experimentDir", "MNIST/", "directory to save training artifacts.")
 inArgs = flags.FLAGS
 
@@ -31,16 +30,15 @@ inArgs = flags.FLAGS
 def get_file_name(expDir, vaeParams, trainParams):     
     # concat hyperparameters into file name
     output_file_base_name = '_'+''.join('{}_{}_'.format(key, val) for key, val in sorted(vaeParams.items()) if key not in ['prior', 'input_d'])
-    output_file_base_name += ''.join('{}_{}_'.format(key, "-".join([str(x) for x in vaeParams['prior'][key]])) for key in sorted(['mu', 'sigma']))
-    output_file_base_name += 'dirichlet_alpha_'+str(vaeParams['prior']['dirichlet_alpha'])
+    output_file_base_name += ''.join('{}_{}_'.format(key, vaeParams['prior'][key]) for key in sorted(['mu', 'sigma']))
     output_file_base_name += '_adamLR_'+str(trainParams['adamLr'])
                                                                                
     # check if results file already exists, if so, append a number                                                                                               
-    results_file_name = pjoin(expDir, "train_logs/gaussMM_vae_trainResults"+output_file_base_name+".txt")
+    results_file_name = pjoin(expDir, "train_logs/gauss_regVae_trainResults"+output_file_base_name+".txt")
     file_exists_counter = 0
     while os.path.isfile(results_file_name):
         file_exists_counter += 1
-        results_file_name = pjoin(expDir, "train_logs/gaussMM_vae_trainResults"+output_file_base_name+"_"+str(file_exists_counter)+".txt")
+        results_file_name = pjoin(expDir, "train_logs/gauss_regVae_trainResults"+output_file_base_name+"_"+str(file_exists_counter)+".txt")
     if file_exists_counter > 0:
         output_file_base_name += "_"+str(file_exists_counter)
 
@@ -57,7 +55,7 @@ def trainVAE(data, vae_hyperParams, hyperParams, param_save_path, logFile=None):
     vae_hyperParams['batchSize'] = hyperParams['batchSize']
 
     # init Mix Density VAE
-    model = GaussMMVAE(vae_hyperParams)
+    model = GaussVAE(vae_hyperParams)
 
     # get training op
     optimizer = tf.train.AdamOptimizer(hyperParams['adamLr']).minimize(-model.elbo_obj)
@@ -146,11 +144,10 @@ def sample_from_model(model, param_file_path, vae_hyperParams, image_file_path, 
 
     with tf.Session() as s:
         persister.restore(s, param_file_path)
-        sample_list = s.run(model.get_samples(nImages))
+        samples = s.run(model.get_samples(nImages))
 
-    for i, samples in enumerate(sample_list):
-        image = Image.fromarray(tile_raster_images(X=samples, img_shape=(28, 28), tile_shape=(int(np.sqrt(nImages)), int(np.sqrt(nImages))), tile_spacing=(1, 1)))
-        image.save(image_file_path+"_component"+str(i)+".png")
+    image = Image.fromarray(tile_raster_images(X=samples, img_shape=(28, 28), tile_shape=(int(np.sqrt(nImages)), int(np.sqrt(nImages))), tile_spacing=(1, 1)))
+    image.save(image_file_path+".png")
 
 
 if __name__ == "__main__":
@@ -161,20 +158,16 @@ if __name__ == "__main__":
     np.random.shuffle(mnist['train'])
 
     # set architecture params
-    vae_hyperParams = {'input_d':mnist['train'].shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, \
-                           'prior':{'dirichlet_alpha':1., 'mu':[-1.5, -.75, 0., .75, 1.5], 'sigma':[1.]*inArgs.K}}
-    #'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
-    assert len(vae_hyperParams['prior']['mu']) == len(vae_hyperParams['prior']['sigma']) == vae_hyperParams['K']
+    vae_hyperParams = {'input_d':mnist['train'].shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'prior':{'mu':0., 'sigma':1.}}
 
     # set training hyperparameters
     train_hyperParams = {'adamLr':inArgs.adamLr, 'nEpochs':inArgs.nEpochs, 'batchSize':inArgs.batchSize, 'lookahead_epochs':25, \
                          'tf_config': tf.ConfigProto(gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5), log_device_placement=False)}
 
-    
     # setup files to write results and save parameters
     outfile_base_name = get_file_name(inArgs.experimentDir, vae_hyperParams, train_hyperParams)
-    logging_file = open(inArgs.experimentDir+"train_logs/gaussMM_vae_trainResults"+outfile_base_name+".txt", 'w')
-    param_file_name = inArgs.experimentDir+"params/gaussMM_vae_params"+outfile_base_name+".ckpt"
+    logging_file = open(inArgs.experimentDir+"train_logs/gauss_regVae_trainResults"+outfile_base_name+".txt", 'w')
+    param_file_name = inArgs.experimentDir+"params/gauss_regVae_params"+outfile_base_name+".ckpt"
 
     # train
     print "Training model..."
@@ -191,4 +184,4 @@ if __name__ == "__main__":
 
     # draw some samples
     print "Drawing samples..."
-    sample_from_model(model, param_file_name, vae_hyperParams, inArgs.experimentDir+'samples/gaussMM_vae_samples'+outfile_base_name)
+    sample_from_model(model, param_file_name, vae_hyperParams, inArgs.experimentDir+'samples/gauss_regVae_samples'+outfile_base_name)
