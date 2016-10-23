@@ -19,8 +19,8 @@ except ImportError:
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 100, "number of epochs to train.")
-flags.DEFINE_float("adamLr", 1e-3, "AdaM learning rate.")
+flags.DEFINE_integer("nEpochs", 50, "number of epochs to train.")
+flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 5, "dimensionality of latent variables.")
 flags.DEFINE_integer("K", 5, "number of components in mixture model.")
