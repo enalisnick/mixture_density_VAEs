@@ -19,8 +19,8 @@ except ImportError:
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 50, "number of epochs to train.")
-flags.DEFINE_float("adamLr", 1e-3, "AdaM learning rate.")
+flags.DEFINE_integer("nEpochs", 100, "number of epochs to train.")
+flags.DEFINE_float("adamLr", 3e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 5, "dimensionality of latent variables.")
 flags.DEFINE_integer("K", 5, "number of components in mixture model.")
@@ -113,7 +113,7 @@ def trainVAE(data, vae_hyperParams, hyperParams, param_save_path, logFile=None):
 
 
 ### Marginal Likelihood Calculation            
-def calc_margLikelihood(data, model, param_file_path, vae_hyperParams, nSamples=100):
+def calc_margLikelihood(data, model, param_file_path, vae_hyperParams, nSamples=50):
     N,d = data.shape
 
     # get op to load the model                                                                                               
@@ -124,11 +124,17 @@ def calc_margLikelihood(data, model, param_file_path, vae_hyperParams, nSamples=
 
         sample_collector = []
         for s_idx in xrange(nSamples):
-            sample_collector.append(s.run(model.get_log_margLL(N), {model.X: data}))
+            samples = s.run(model.get_log_margLL(N), {model.X: data})
+            if not np.isnan(samples.mean()) and not np.isinf(samples.mean()):
+                sample_collector.append(samples)
         
+    if len(sample_collector) < 1:
+        print "\tMARG LIKELIHOOD CALC: No valid samples were collected!"
+        return np.nan
+
     all_samples = np.hstack(sample_collector)
     m = np.amax(all_samples, axis=1)
-    mLL = np.sum(m + np.log(np.mean(np.exp( all_samples - m[np.newaxis].T ), axis=1)))
+    mLL = m + np.log(np.mean(np.exp( all_samples - m[np.newaxis].T ), axis=1))
     return mLL.mean()
 
 

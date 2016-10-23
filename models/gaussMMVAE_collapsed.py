@@ -180,23 +180,19 @@ class GaussMMVAE(object):
         # compose into stick segments using pi = v \prod (1-v)                                                     
         self.pi_samples = self.compose_stick_segments(v_samples)
 
-        '''
         # sample a component index
         uni_samples = tf.random_uniform((tf.shape(a_inv)[0], self.K), minval=1e-8, maxval=1-1e-8)
         gumbel_samples = -tf.log(-tf.log(uni_samples))
-        component_samples = tf.argmax(tf.log(self.pi_samples) + gumbel_samples, 1)
+        component_samples = tf.to_int32(tf.argmax(tf.log(tf.concat(1, self.pi_samples)) + gumbel_samples, 1))
 
         # calc likelihood term for chosen components
         all_ll = []
-        ll = tf.zeros((batchSize,1))
         for k in xrange(self.K): all_ll.append(-compute_nll(self.X, self.x_recons_linear[k]))
-        for batch_idx in xrange(batchSize): 
-            ll[batch_idx,0] = all_ll[component_samples[batch_idx]][batch_idx,0]
-        '''
+        all_ll = tf.concat(1, all_ll)
 
-        ll = tf.mul(self.pi_samples[0], tf.exp(-compute_nll(self.X, self.x_recons_linear[0])))
-        for k in xrange(self.K-1): ll += tf.mul(self.pi_samples[k+1], tf.exp(-compute_nll(self.X, self.x_recons_linear[k+1])))
-        ll = tf.log(ll)
+        component_samples = tf.concat(1, [tf.expand_dims(tf.range(0,batchSize),1), tf.expand_dims(component_samples,1)])
+        ll = tf.gather_nd(all_ll, component_samples)
+        ll = tf.expand_dims(ll,1)
 
         # calc prior and post terms 
         log_prior = log_normal_pdf(self.z[0], self.mu[0], self.sigma[0])
