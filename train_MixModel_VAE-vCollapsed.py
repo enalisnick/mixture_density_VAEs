@@ -106,7 +106,7 @@ def trainVAE(data, vae_hyperParams, hyperParams, param_save_path, logFile=None):
                 logFile.flush()
 
             # check for convergence
-            if epoch_idx - best_epoch > hyperParams['lookahead_epochs']: break  
+            if epoch_idx - best_epoch > hyperParams['lookahead_epochs'] or np.isnan(train_elbo): break  
 
     return model
 
@@ -162,7 +162,8 @@ if __name__ == "__main__":
 
     # set architecture params
     vae_hyperParams = {'input_d':mnist['train'].shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, \
-                           'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
+                           'prior':{'dirichlet_alpha':1., 'mu':[-2., -1., 0., 1., 2.], 'sigma':[1.]*inArgs.K}}
+    #'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
     assert len(vae_hyperParams['prior']['mu']) == len(vae_hyperParams['prior']['sigma']) == vae_hyperParams['K']
 
     # set training hyperparameters
