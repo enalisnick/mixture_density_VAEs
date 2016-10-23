@@ -22,7 +22,10 @@ function fprop_encoder(params, x)
   batchSize = size(x,1)
 
   h1 = relu(x*params["w_encoder"][1] .+ params["b_encoder"][1])
+  return h1
+end
 
+function fprop_z(params, h1)
   # compute mixture parameters (all components -- needed for KL term)
   log_mix_weights = h1*params["w_encoder"][2] .+ params["b_encoder"][2]
   posterior = Dict("weights"=>softmax(log_mix_weights), "mu"=>[zeros(batchSize, latent_size) for i=1:n_components], "sigma"=>[zeros(batchSize, latent_size) for i=1:n_components])
@@ -98,6 +101,10 @@ end
 
 # get decoder grad via AutoGrad
 nll_grad = grad(decoder_nll)
+# ? does this work
+kl_grad = grad(computeKLD)
+# get grads for first weights
+encoder_grad = grad(fprop_encoder)
 
 function elbo_grad(params, x, priorParams)
   # get dimensions
@@ -109,10 +116,18 @@ function elbo_grad(params, x, priorParams)
   grads = init_params(in_size, hidden_size, latent_size, n_components, 0.)
 
   # get derivatives of ELBO wrt decoder params and z
-  z, posterior = fprop_encoder(params, x)
+  h1 = fprop_encoder(params, x)
+  z, posterior = fprop_z(params, h1)
   decoder_grads = nll_grad(Dict("w_decoder"=>params["w_decoder"], "b_decoder"=>params["b_decoder"], "z"=>z), x)
+  kl_grads = kl_grad(Dict("w_encoder"=>params["w_encoder"], "b_encoder"=>params["b_encoder"], "z"=>z), x)
 
+  # get derivatives of z wrt pi
+  weight_grads = []
+  for j in 1:n_components
+    append!(weight_grads, compute_dh_dpi(z, params["weights"], posterior["mu"], posterior["cov"], j, 100))
+  end
 
+  # we have grads for dz/dpi now need grads of z wrt mu, sigma
 
   return grads
 end
