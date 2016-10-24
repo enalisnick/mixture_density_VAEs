@@ -19,7 +19,7 @@ except ImportError:
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 300, "number of epochs to train.")
+flags.DEFINE_integer("nEpochs", 500, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 3e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 5, "dimensionality of latent variables.")
@@ -162,8 +162,8 @@ if __name__ == "__main__":
 
     # set architecture params
     vae_hyperParams = {'input_d':mnist['train'].shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, \
-                           'prior':{'dirichlet_alpha':1., 'mu':[-1.5, -.75, 0., .75, 1.5], 'sigma':[1.]*inArgs.K}}
-    #'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
+                           'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
+    #'prior':{'dirichlet_alpha':1., 'mu':[-.5, -.25, 0., .25, .5], 'sigma':[1.]*inArgs.K}}
     assert len(vae_hyperParams['prior']['mu']) == len(vae_hyperParams['prior']['sigma']) == vae_hyperParams['K']
 
     # set training hyperparameters
