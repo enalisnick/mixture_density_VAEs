@@ -21,7 +21,7 @@ flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
 flags.DEFINE_integer("nEpochs", 500, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 3e-4, "AdaM learning rate.")
-flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
+flags.DEFINE_integer("hidden_size", 1000, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 25, "dimensionality of latent variables.")
 flags.DEFINE_integer("K", 3, "number of components in mixture model.")
 flags.DEFINE_string("experimentDir", "MNIST/", "directory to save training artifacts.")
@@ -97,7 +97,6 @@ def trainVAE(data, vae_hyperParams, hyperParams, param_save_path, logFile=None):
                 star_printer = "***"
                 # save the parameters
                 persister.save(s, param_save_path)
-                cp.dump(model, open(param_save_path.split('.ckpt')[0]+'.pkl', 'wb'), protocol=cp.HIGHEST_PROTOCOL)
 
             # log training progress
             logging_str = "Epoch %d.  Train ELBO: %.3f,  Validation ELBO: %.3f %s" %(epoch_idx+1, train_elbo, valid_elbo, star_printer)

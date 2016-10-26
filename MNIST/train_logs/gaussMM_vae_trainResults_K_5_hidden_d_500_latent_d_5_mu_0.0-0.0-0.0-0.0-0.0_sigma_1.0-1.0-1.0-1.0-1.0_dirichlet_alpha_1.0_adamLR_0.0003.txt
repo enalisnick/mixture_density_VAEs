@@ -1,0 +1,344 @@
+Epoch 1.  Train ELBO: -245.461,  Validation ELBO: -206.945 ***
+Epoch 2.  Train ELBO: -198.505,  Validation ELBO: -193.178 ***
+Epoch 3.  Train ELBO: -183.852,  Validation ELBO: -176.159 ***
+Epoch 4.  Train ELBO: -167.784,  Validation ELBO: -163.844 ***
+Epoch 5.  Train ELBO: -159.236,  Validation ELBO: -155.295 ***
+Epoch 6.  Train ELBO: -151.773,  Validation ELBO: -150.316 ***
+Epoch 7.  Train ELBO: -148.175,  Validation ELBO: -147.704 ***
+Epoch 8.  Train ELBO: -145.971,  Validation ELBO: -145.851 ***
+Epoch 9.  Train ELBO: -144.342,  Validation ELBO: -144.487 ***
+Epoch 10.  Train ELBO: -143.161,  Validation ELBO: -143.519 ***
+Epoch 11.  Train ELBO: -142.245,  Validation ELBO: -142.662 ***
+Epoch 12.  Train ELBO: -141.525,  Validation ELBO: -142.071 ***
+Epoch 13.  Train ELBO: -140.908,  Validation ELBO: -141.507 ***
+Epoch 14.  Train ELBO: -140.381,  Validation ELBO: -141.011 ***
+Epoch 15.  Train ELBO: -139.896,  Validation ELBO: -140.550 ***
+Epoch 16.  Train ELBO: -139.468,  Validation ELBO: -140.192 ***
+Epoch 17.  Train ELBO: -139.058,  Validation ELBO: -139.788 ***
+Epoch 18.  Train ELBO: -138.708,  Validation ELBO: -139.446 ***
+Epoch 19.  Train ELBO: -138.365,  Validation ELBO: -139.163 ***
+Epoch 20.  Train ELBO: -138.035,  Validation ELBO: -138.858 ***
+Epoch 21.  Train ELBO: -137.740,  Validation ELBO: -138.629 ***
+Epoch 22.  Train ELBO: -137.470,  Validation ELBO: -138.332 ***
+Epoch 23.  Train ELBO: -137.197,  Validation ELBO: -138.088 ***
+Epoch 24.  Train ELBO: -136.952,  Validation ELBO: -137.923 ***
+Epoch 25.  Train ELBO: -136.719,  Validation ELBO: -137.654 ***
+Epoch 26.  Train ELBO: -136.488,  Validation ELBO: -137.539 ***
+Epoch 27.  Train ELBO: -136.311,  Validation ELBO: -137.409 ***
+Epoch 28.  Train ELBO: -136.099,  Validation ELBO: -137.126 ***
+Epoch 29.  Train ELBO: -135.924,  Validation ELBO: -137.015 ***
+Epoch 30.  Train ELBO: -135.742,  Validation ELBO: -136.817 ***
+Epoch 31.  Train ELBO: -135.579,  Validation ELBO: -136.716 ***
+Epoch 32.  Train ELBO: -135.416,  Validation ELBO: -136.620 ***
+Epoch 33.  Train ELBO: -135.256,  Validation ELBO: -136.452 ***
+Epoch 34.  Train ELBO: -135.116,  Validation ELBO: -136.370 ***
+Epoch 35.  Train ELBO: -134.977,  Validation ELBO: -136.263 ***
+Epoch 36.  Train ELBO: -134.860,  Validation ELBO: -136.177 ***
+Epoch 37.  Train ELBO: -134.736,  Validation ELBO: -136.083 ***
+Epoch 38.  Train ELBO: -134.607,  Validation ELBO: -135.979 ***
+Epoch 39.  Train ELBO: -134.487,  Validation ELBO: -135.803 ***
+Epoch 40.  Train ELBO: -134.396,  Validation ELBO: -135.821 
+Epoch 41.  Train ELBO: -134.298,  Validation ELBO: -135.724 ***
+Epoch 42.  Train ELBO: -134.183,  Validation ELBO: -135.575 ***
+Epoch 43.  Train ELBO: -134.091,  Validation ELBO: -135.543 ***
+Epoch 44.  Train ELBO: -134.002,  Validation ELBO: -135.413 ***
+Epoch 45.  Train ELBO: -133.916,  Validation ELBO: -135.389 ***
+Epoch 46.  Train ELBO: -133.830,  Validation ELBO: -135.339 ***
+Epoch 47.  Train ELBO: -133.740,  Validation ELBO: -135.227 ***
+Epoch 48.  Train ELBO: -133.679,  Validation ELBO: -135.216 ***
+Epoch 49.  Train ELBO: -133.584,  Validation ELBO: -135.130 ***
+Epoch 50.  Train ELBO: -133.505,  Validation ELBO: -135.136 
+Epoch 51.  Train ELBO: -133.443,  Validation ELBO: -135.072 ***
+Epoch 52.  Train ELBO: -133.377,  Validation ELBO: -134.985 ***
+Epoch 53.  Train ELBO: -133.304,  Validation ELBO: -134.978 ***
+Epoch 54.  Train ELBO: -133.243,  Validation ELBO: -134.954 ***
+Epoch 55.  Train ELBO: -133.197,  Validation ELBO: -134.862 ***
+Epoch 56.  Train ELBO: -133.105,  Validation ELBO: -134.852 ***
+Epoch 57.  Train ELBO: -133.054,  Validation ELBO: -134.768 ***
+Epoch 58.  Train ELBO: -132.991,  Validation ELBO: -134.737 ***
+Epoch 59.  Train ELBO: -132.960,  Validation ELBO: -134.723 ***
+Epoch 60.  Train ELBO: -132.905,  Validation ELBO: -134.679 ***
+Epoch 61.  Train ELBO: -132.846,  Validation ELBO: -134.573 ***
+Epoch 62.  Train ELBO: -132.781,  Validation ELBO: -134.579 
+Epoch 63.  Train ELBO: -132.741,  Validation ELBO: -134.529 ***
+Epoch 64.  Train ELBO: -132.692,  Validation ELBO: -134.521 ***
+Epoch 65.  Train ELBO: -132.658,  Validation ELBO: -134.529 
+Epoch 66.  Train ELBO: -132.601,  Validation ELBO: -134.439 ***
+Epoch 67.  Train ELBO: -132.559,  Validation ELBO: -134.386 ***
+Epoch 68.  Train ELBO: -132.520,  Validation ELBO: -134.391 
+Epoch 69.  Train ELBO: -132.466,  Validation ELBO: -134.369 ***
+Epoch 70.  Train ELBO: -132.439,  Validation ELBO: -134.401 
+Epoch 71.  Train ELBO: -132.381,  Validation ELBO: -134.340 ***
+Epoch 72.  Train ELBO: -132.348,  Validation ELBO: -134.292 ***
+Epoch 73.  Train ELBO: -132.299,  Validation ELBO: -134.283 ***
+Epoch 74.  Train ELBO: -132.263,  Validation ELBO: -134.197 ***
+Epoch 75.  Train ELBO: -132.240,  Validation ELBO: -134.221 
+Epoch 76.  Train ELBO: -132.190,  Validation ELBO: -134.211 
+Epoch 77.  Train ELBO: -132.160,  Validation ELBO: -134.256 
+Epoch 78.  Train ELBO: -132.122,  Validation ELBO: -134.109 ***
+Epoch 79.  Train ELBO: -132.092,  Validation ELBO: -134.230 
+Epoch 80.  Train ELBO: -132.049,  Validation ELBO: -134.133 
+Epoch 81.  Train ELBO: -132.023,  Validation ELBO: -134.088 ***
+Epoch 82.  Train ELBO: -131.988,  Validation ELBO: -134.073 ***
+Epoch 83.  Train ELBO: -131.943,  Validation ELBO: -134.071 ***
+Epoch 84.  Train ELBO: -131.924,  Validation ELBO: -134.044 ***
+Epoch 85.  Train ELBO: -131.885,  Validation ELBO: -134.050 
+Epoch 86.  Train ELBO: -131.877,  Validation ELBO: -134.028 ***
+Epoch 87.  Train ELBO: -131.820,  Validation ELBO: -133.954 ***
+Epoch 88.  Train ELBO: -131.790,  Validation ELBO: -133.971 
+Epoch 89.  Train ELBO: -131.765,  Validation ELBO: -133.947 ***
+Epoch 90.  Train ELBO: -131.755,  Validation ELBO: -133.968 
+Epoch 91.  Train ELBO: -131.717,  Validation ELBO: -133.938 ***
+Epoch 92.  Train ELBO: -131.699,  Validation ELBO: -133.931 ***
+Epoch 93.  Train ELBO: -131.667,  Validation ELBO: -133.858 ***
+Epoch 94.  Train ELBO: -131.629,  Validation ELBO: -133.849 ***
+Epoch 95.  Train ELBO: -131.608,  Validation ELBO: -133.888 
+Epoch 96.  Train ELBO: -131.587,  Validation ELBO: -133.902 
+Epoch 97.  Train ELBO: -131.550,  Validation ELBO: -133.829 ***
+Epoch 98.  Train ELBO: -131.538,  Validation ELBO: -133.829 
+Epoch 99.  Train ELBO: -131.500,  Validation ELBO: -133.822 ***
+Epoch 100.  Train ELBO: -131.497,  Validation ELBO: -133.757 ***
+Epoch 101.  Train ELBO: -131.455,  Validation ELBO: -133.781 
+Epoch 102.  Train ELBO: -131.440,  Validation ELBO: -133.749 ***
+Epoch 103.  Train ELBO: -131.420,  Validation ELBO: -133.785 
+Epoch 104.  Train ELBO: -131.379,  Validation ELBO: -133.733 ***
+Epoch 105.  Train ELBO: -131.353,  Validation ELBO: -133.667 ***
+Epoch 106.  Train ELBO: -131.339,  Validation ELBO: -133.688 
+Epoch 107.  Train ELBO: -131.318,  Validation ELBO: -133.696 
+Epoch 108.  Train ELBO: -131.293,  Validation ELBO: -133.696 
+Epoch 109.  Train ELBO: -131.271,  Validation ELBO: -133.712 
+Epoch 110.  Train ELBO: -131.261,  Validation ELBO: -133.663 ***
+Epoch 111.  Train ELBO: -131.233,  Validation ELBO: -133.650 ***
+Epoch 112.  Train ELBO: -131.208,  Validation ELBO: -133.629 ***
+Epoch 113.  Train ELBO: -131.189,  Validation ELBO: -133.625 ***
+Epoch 114.  Train ELBO: -131.160,  Validation ELBO: -133.609 ***
+Epoch 115.  Train ELBO: -131.163,  Validation ELBO: -133.563 ***
+Epoch 116.  Train ELBO: -131.136,  Validation ELBO: -133.622 
+Epoch 117.  Train ELBO: -131.106,  Validation ELBO: -133.563 ***
+Epoch 118.  Train ELBO: -131.100,  Validation ELBO: -133.544 ***
+Epoch 119.  Train ELBO: -131.086,  Validation ELBO: -133.536 ***
+Epoch 120.  Train ELBO: -131.049,  Validation ELBO: -133.590 
+Epoch 121.  Train ELBO: -131.040,  Validation ELBO: -133.562 
+Epoch 122.  Train ELBO: -131.018,  Validation ELBO: -133.546 
+Epoch 123.  Train ELBO: -131.009,  Validation ELBO: -133.520 ***
+Epoch 124.  Train ELBO: -130.970,  Validation ELBO: -133.509 ***
+Epoch 125.  Train ELBO: -130.962,  Validation ELBO: -133.520 
+Epoch 126.  Train ELBO: -130.939,  Validation ELBO: -133.494 ***
+Epoch 127.  Train ELBO: -130.931,  Validation ELBO: -133.467 ***
+Epoch 128.  Train ELBO: -130.914,  Validation ELBO: -133.503 
+Epoch 129.  Train ELBO: -130.896,  Validation ELBO: -133.495 
+Epoch 130.  Train ELBO: -130.882,  Validation ELBO: -133.465 ***
+Epoch 131.  Train ELBO: -130.863,  Validation ELBO: -133.491 
+Epoch 132.  Train ELBO: -130.859,  Validation ELBO: -133.435 ***
+Epoch 133.  Train ELBO: -130.821,  Validation ELBO: -133.437 
+Epoch 134.  Train ELBO: -130.807,  Validation ELBO: -133.442 
+Epoch 135.  Train ELBO: -130.802,  Validation ELBO: -133.471 
+Epoch 136.  Train ELBO: -130.783,  Validation ELBO: -133.486 
+Epoch 137.  Train ELBO: -130.768,  Validation ELBO: -133.430 ***
+Epoch 138.  Train ELBO: -130.746,  Validation ELBO: -133.387 ***
+Epoch 139.  Train ELBO: -130.725,  Validation ELBO: -133.393 
+Epoch 140.  Train ELBO: -130.715,  Validation ELBO: -133.431 
+Epoch 141.  Train ELBO: -130.702,  Validation ELBO: -133.393 
+Epoch 142.  Train ELBO: -130.687,  Validation ELBO: -133.370 ***
+Epoch 143.  Train ELBO: -130.686,  Validation ELBO: -133.401 
+Epoch 144.  Train ELBO: -130.658,  Validation ELBO: -133.388 
+Epoch 145.  Train ELBO: -130.655,  Validation ELBO: -133.350 ***
+Epoch 146.  Train ELBO: -130.626,  Validation ELBO: -133.342 ***
+Epoch 147.  Train ELBO: -130.619,  Validation ELBO: -133.352 
+Epoch 148.  Train ELBO: -130.618,  Validation ELBO: -133.396 
+Epoch 149.  Train ELBO: -130.609,  Validation ELBO: -133.332 ***
+Epoch 150.  Train ELBO: -130.557,  Validation ELBO: -133.358 
+Epoch 151.  Train ELBO: -130.554,  Validation ELBO: -133.367 
+Epoch 152.  Train ELBO: -130.563,  Validation ELBO: -133.350 
+Epoch 153.  Train ELBO: -130.552,  Validation ELBO: -133.356 
+Epoch 154.  Train ELBO: -130.510,  Validation ELBO: -133.269 ***
+Epoch 155.  Train ELBO: -130.511,  Validation ELBO: -133.324 
+Epoch 156.  Train ELBO: -130.516,  Validation ELBO: -133.281 
+Epoch 157.  Train ELBO: -130.473,  Validation ELBO: -133.294 
+Epoch 158.  Train ELBO: -130.462,  Validation ELBO: -133.351 
+Epoch 159.  Train ELBO: -130.463,  Validation ELBO: -133.299 
+Epoch 160.  Train ELBO: -130.453,  Validation ELBO: -133.271 
+Epoch 161.  Train ELBO: -130.443,  Validation ELBO: -133.285 
+Epoch 162.  Train ELBO: -130.423,  Validation ELBO: -133.257 ***
+Epoch 163.  Train ELBO: -130.404,  Validation ELBO: -133.288 
+Epoch 164.  Train ELBO: -130.383,  Validation ELBO: -133.249 ***
+Epoch 165.  Train ELBO: -130.391,  Validation ELBO: -133.270 
+Epoch 166.  Train ELBO: -130.365,  Validation ELBO: -133.245 ***
+Epoch 167.  Train ELBO: -130.359,  Validation ELBO: -133.221 ***
+Epoch 168.  Train ELBO: -130.359,  Validation ELBO: -133.201 ***
+Epoch 169.  Train ELBO: -130.333,  Validation ELBO: -133.207 
+Epoch 170.  Train ELBO: -130.327,  Validation ELBO: -133.218 
+Epoch 171.  Train ELBO: -130.315,  Validation ELBO: -133.265 
+Epoch 172.  Train ELBO: -130.310,  Validation ELBO: -133.262 
+Epoch 173.  Train ELBO: -130.300,  Validation ELBO: -133.198 ***
+Epoch 174.  Train ELBO: -130.281,  Validation ELBO: -133.183 ***
+Epoch 175.  Train ELBO: -130.273,  Validation ELBO: -133.213 
+Epoch 176.  Train ELBO: -130.254,  Validation ELBO: -133.214 
+Epoch 177.  Train ELBO: -130.248,  Validation ELBO: -133.229 
+Epoch 178.  Train ELBO: -130.238,  Validation ELBO: -133.158 ***
+Epoch 179.  Train ELBO: -130.232,  Validation ELBO: -133.215 
+Epoch 180.  Train ELBO: -130.212,  Validation ELBO: -133.228 
+Epoch 181.  Train ELBO: -130.216,  Validation ELBO: -133.217 
+Epoch 182.  Train ELBO: -130.189,  Validation ELBO: -133.203 
+Epoch 183.  Train ELBO: -130.185,  Validation ELBO: -133.164 
+Epoch 184.  Train ELBO: -130.164,  Validation ELBO: -133.172 
+Epoch 185.  Train ELBO: -130.176,  Validation ELBO: -133.193 
+Epoch 186.  Train ELBO: -130.152,  Validation ELBO: -133.184 
+Epoch 187.  Train ELBO: -130.156,  Validation ELBO: -133.136 ***
+Epoch 188.  Train ELBO: -130.123,  Validation ELBO: -133.175 
+Epoch 189.  Train ELBO: -130.116,  Validation ELBO: -133.188 
+Epoch 190.  Train ELBO: -130.141,  Validation ELBO: -133.167 
+Epoch 191.  Train ELBO: -130.126,  Validation ELBO: -133.145 
+Epoch 192.  Train ELBO: -130.093,  Validation ELBO: -133.157 
+Epoch 193.  Train ELBO: -130.086,  Validation ELBO: -133.139 
+Epoch 194.  Train ELBO: -130.079,  Validation ELBO: -133.186 
+Epoch 195.  Train ELBO: -130.085,  Validation ELBO: -133.180 
+Epoch 196.  Train ELBO: -130.061,  Validation ELBO: -133.196 
+Epoch 197.  Train ELBO: -130.056,  Validation ELBO: -133.107 ***
+Epoch 198.  Train ELBO: -130.036,  Validation ELBO: -133.189 
+Epoch 199.  Train ELBO: -130.034,  Validation ELBO: -133.160 
+Epoch 200.  Train ELBO: -129.996,  Validation ELBO: -133.154 
+Epoch 201.  Train ELBO: -130.027,  Validation ELBO: -133.158 
+Epoch 202.  Train ELBO: -130.001,  Validation ELBO: -133.115 
+Epoch 203.  Train ELBO: -129.995,  Validation ELBO: -133.168 
+Epoch 204.  Train ELBO: -130.002,  Validation ELBO: -133.126 
+Epoch 205.  Train ELBO: -129.974,  Validation ELBO: -133.129 
+Epoch 206.  Train ELBO: -129.989,  Validation ELBO: -133.099 ***
+Epoch 207.  Train ELBO: -129.956,  Validation ELBO: -133.163 
+Epoch 208.  Train ELBO: -129.964,  Validation ELBO: -133.113 
+Epoch 209.  Train ELBO: -129.965,  Validation ELBO: -133.083 ***
+Epoch 210.  Train ELBO: -129.942,  Validation ELBO: -133.110 
+Epoch 211.  Train ELBO: -129.940,  Validation ELBO: -133.096 
+Epoch 212.  Train ELBO: -129.930,  Validation ELBO: -133.157 
+Epoch 213.  Train ELBO: -129.905,  Validation ELBO: -133.139 
+Epoch 214.  Train ELBO: -129.919,  Validation ELBO: -133.133 
+Epoch 215.  Train ELBO: -129.896,  Validation ELBO: -133.085 
+Epoch 216.  Train ELBO: -129.902,  Validation ELBO: -133.114 
+Epoch 217.  Train ELBO: -129.872,  Validation ELBO: -133.124 
+Epoch 218.  Train ELBO: -129.891,  Validation ELBO: -133.134 
+Epoch 219.  Train ELBO: -129.879,  Validation ELBO: -133.060 ***
+Epoch 220.  Train ELBO: -129.858,  Validation ELBO: -133.123 
+Epoch 221.  Train ELBO: -129.848,  Validation ELBO: -133.141 
+Epoch 222.  Train ELBO: -129.844,  Validation ELBO: -133.095 
+Epoch 223.  Train ELBO: -129.827,  Validation ELBO: -133.054 ***
+Epoch 224.  Train ELBO: -129.837,  Validation ELBO: -133.062 
+Epoch 225.  Train ELBO: -129.829,  Validation ELBO: -133.103 
+Epoch 226.  Train ELBO: -129.807,  Validation ELBO: -133.117 
+Epoch 227.  Train ELBO: -129.809,  Validation ELBO: -133.063 
+Epoch 228.  Train ELBO: -129.792,  Validation ELBO: -133.089 
+Epoch 229.  Train ELBO: -129.780,  Validation ELBO: -133.035 ***
+Epoch 230.  Train ELBO: -129.773,  Validation ELBO: -133.098 
+Epoch 231.  Train ELBO: -129.798,  Validation ELBO: -133.061 
+Epoch 232.  Train ELBO: -129.783,  Validation ELBO: -133.050 
+Epoch 233.  Train ELBO: -129.739,  Validation ELBO: -133.062 
+Epoch 234.  Train ELBO: -129.752,  Validation ELBO: -133.040 
+Epoch 235.  Train ELBO: -129.754,  Validation ELBO: -133.051 
+Epoch 236.  Train ELBO: -129.753,  Validation ELBO: -133.107 
+Epoch 237.  Train ELBO: -129.732,  Validation ELBO: -133.111 
+Epoch 238.  Train ELBO: -129.730,  Validation ELBO: -133.056 
+Epoch 239.  Train ELBO: -129.732,  Validation ELBO: -133.073 
+Epoch 240.  Train ELBO: -129.710,  Validation ELBO: -133.056 
+Epoch 241.  Train ELBO: -129.712,  Validation ELBO: -133.039 
+Epoch 242.  Train ELBO: -129.677,  Validation ELBO: -133.094 
+Epoch 243.  Train ELBO: -129.681,  Validation ELBO: -133.031 ***
+Epoch 244.  Train ELBO: -129.688,  Validation ELBO: -133.053 
+Epoch 245.  Train ELBO: -129.681,  Validation ELBO: -133.041 
+Epoch 246.  Train ELBO: -129.679,  Validation ELBO: -133.063 
+Epoch 247.  Train ELBO: -129.671,  Validation ELBO: -133.086 
+Epoch 248.  Train ELBO: -129.672,  Validation ELBO: -133.069 
+Epoch 249.  Train ELBO: -129.647,  Validation ELBO: -133.040 
+Epoch 250.  Train ELBO: -129.669,  Validation ELBO: -133.041 
+Epoch 251.  Train ELBO: -129.647,  Validation ELBO: -133.066 
+Epoch 252.  Train ELBO: -129.635,  Validation ELBO: -133.006 ***
+Epoch 253.  Train ELBO: -129.621,  Validation ELBO: -132.990 ***
+Epoch 254.  Train ELBO: -129.622,  Validation ELBO: -133.090 
+Epoch 255.  Train ELBO: -129.621,  Validation ELBO: -133.049 
+Epoch 256.  Train ELBO: -129.601,  Validation ELBO: -133.042 
+Epoch 257.  Train ELBO: -129.605,  Validation ELBO: -133.007 
+Epoch 258.  Train ELBO: -129.590,  Validation ELBO: -133.018 
+Epoch 259.  Train ELBO: -129.579,  Validation ELBO: -133.006 
+Epoch 260.  Train ELBO: -129.582,  Validation ELBO: -133.044 
+Epoch 261.  Train ELBO: -129.580,  Validation ELBO: -132.991 
+Epoch 262.  Train ELBO: -129.575,  Validation ELBO: -133.013 
+Epoch 263.  Train ELBO: -129.566,  Validation ELBO: -133.038 
+Epoch 264.  Train ELBO: -129.564,  Validation ELBO: -133.062 
+Epoch 265.  Train ELBO: -129.561,  Validation ELBO: -133.049 
+Epoch 266.  Train ELBO: -129.553,  Validation ELBO: -133.005 
+Epoch 267.  Train ELBO: -129.543,  Validation ELBO: -133.036 
+Epoch 268.  Train ELBO: -129.533,  Validation ELBO: -133.041 
+Epoch 269.  Train ELBO: -129.536,  Validation ELBO: -133.034 
+Epoch 270.  Train ELBO: -129.513,  Validation ELBO: -132.977 ***
+Epoch 271.  Train ELBO: -129.511,  Validation ELBO: -133.047 
+Epoch 272.  Train ELBO: -129.505,  Validation ELBO: -133.016 
+Epoch 273.  Train ELBO: -129.494,  Validation ELBO: -133.024 
+Epoch 274.  Train ELBO: -129.509,  Validation ELBO: -133.056 
+Epoch 275.  Train ELBO: -129.491,  Validation ELBO: -132.979 
+Epoch 276.  Train ELBO: -129.476,  Validation ELBO: -133.011 
+Epoch 277.  Train ELBO: -129.495,  Validation ELBO: -132.999 
+Epoch 278.  Train ELBO: -129.455,  Validation ELBO: -132.993 
+Epoch 279.  Train ELBO: -129.459,  Validation ELBO: -133.022 
+Epoch 280.  Train ELBO: -129.467,  Validation ELBO: -133.000 
+Epoch 281.  Train ELBO: -129.466,  Validation ELBO: -132.983 
+Epoch 282.  Train ELBO: -129.435,  Validation ELBO: -133.039 
+Epoch 283.  Train ELBO: -129.457,  Validation ELBO: -133.052 
+Epoch 284.  Train ELBO: -129.417,  Validation ELBO: -133.017 
+Epoch 285.  Train ELBO: -129.434,  Validation ELBO: -133.032 
+Epoch 286.  Train ELBO: -129.425,  Validation ELBO: -133.030 
+Epoch 287.  Train ELBO: -129.430,  Validation ELBO: -132.998 
+Epoch 288.  Train ELBO: -129.418,  Validation ELBO: -132.981 
+Epoch 289.  Train ELBO: -129.429,  Validation ELBO: -132.988 
+Epoch 290.  Train ELBO: -129.430,  Validation ELBO: -132.997 
+Epoch 291.  Train ELBO: -129.386,  Validation ELBO: -132.981 
+Epoch 292.  Train ELBO: -129.392,  Validation ELBO: -132.972 ***
+Epoch 293.  Train ELBO: -129.389,  Validation ELBO: -133.032 
+Epoch 294.  Train ELBO: -129.390,  Validation ELBO: -132.968 ***
+Epoch 295.  Train ELBO: -129.387,  Validation ELBO: -133.020 
+Epoch 296.  Train ELBO: -129.381,  Validation ELBO: -133.004 
+Epoch 297.  Train ELBO: -129.388,  Validation ELBO: -132.980 
+Epoch 298.  Train ELBO: -129.373,  Validation ELBO: -133.004 
+Epoch 299.  Train ELBO: -129.360,  Validation ELBO: -132.978 
+Epoch 300.  Train ELBO: -129.374,  Validation ELBO: -133.002 
+Epoch 301.  Train ELBO: -129.348,  Validation ELBO: -133.001 
+Epoch 302.  Train ELBO: -129.333,  Validation ELBO: -132.994 
+Epoch 303.  Train ELBO: -129.340,  Validation ELBO: -132.995 
+Epoch 304.  Train ELBO: -129.341,  Validation ELBO: -132.987 
+Epoch 305.  Train ELBO: -129.337,  Validation ELBO: -133.005 
+Epoch 306.  Train ELBO: -129.326,  Validation ELBO: -132.976 
+Epoch 307.  Train ELBO: -129.315,  Validation ELBO: -133.053 
+Epoch 308.  Train ELBO: -129.316,  Validation ELBO: -132.991 
+Epoch 309.  Train ELBO: -129.309,  Validation ELBO: -133.005 
+Epoch 310.  Train ELBO: -129.290,  Validation ELBO: -132.995 
+Epoch 311.  Train ELBO: -129.300,  Validation ELBO: -133.001 
+Epoch 312.  Train ELBO: -129.301,  Validation ELBO: -133.019 
+Epoch 313.  Train ELBO: -129.291,  Validation ELBO: -132.993 
+Epoch 314.  Train ELBO: -129.284,  Validation ELBO: -132.981 
+Epoch 315.  Train ELBO: -129.273,  Validation ELBO: -132.944 ***
+Epoch 316.  Train ELBO: -129.282,  Validation ELBO: -133.012 
+Epoch 317.  Train ELBO: -129.269,  Validation ELBO: -132.970 
+Epoch 318.  Train ELBO: -129.267,  Validation ELBO: -132.998 
+Epoch 319.  Train ELBO: -129.260,  Validation ELBO: -132.961 
+Epoch 320.  Train ELBO: -129.250,  Validation ELBO: -132.969 
+Epoch 321.  Train ELBO: -129.243,  Validation ELBO: -133.025 
+Epoch 322.  Train ELBO: -129.254,  Validation ELBO: -132.949 
+Epoch 323.  Train ELBO: -129.241,  Validation ELBO: -133.018 
+Epoch 324.  Train ELBO: -129.234,  Validation ELBO: -132.966 
+Epoch 325.  Train ELBO: -129.258,  Validation ELBO: -132.972 
+Epoch 326.  Train ELBO: -129.237,  Validation ELBO: -132.965 
+Epoch 327.  Train ELBO: -129.227,  Validation ELBO: -132.948 
+Epoch 328.  Train ELBO: -129.210,  Validation ELBO: -132.945 
+Epoch 329.  Train ELBO: -129.205,  Validation ELBO: -133.041 
+Epoch 330.  Train ELBO: -129.213,  Validation ELBO: -133.001 
+Epoch 331.  Train ELBO: -129.200,  Validation ELBO: -133.007 
+Epoch 332.  Train ELBO: -129.209,  Validation ELBO: -133.002 
+Epoch 333.  Train ELBO: -129.203,  Validation ELBO: -133.020 
+Epoch 334.  Train ELBO: -129.192,  Validation ELBO: -132.969 
+Epoch 335.  Train ELBO: -129.181,  Validation ELBO: -133.043 
+Epoch 336.  Train ELBO: -129.179,  Validation ELBO: -132.991 
+Epoch 337.  Train ELBO: -129.169,  Validation ELBO: -132.971 
+Epoch 338.  Train ELBO: -129.168,  Validation ELBO: -132.994 
+Epoch 339.  Train ELBO: -129.184,  Validation ELBO: -133.040 
+Epoch 340.  Train ELBO: -129.163,  Validation ELBO: -132.945 
+Epoch 341.  Train ELBO: -129.143,  Validation ELBO: -133.004 
+
+
+Validation Marginal Likelihood: -126.292,  Test Marginal Likelihood: -125.389
