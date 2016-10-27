@@ -11,12 +11,12 @@ def get_image_paths(dataset):
     return image_paths
 
 def turn_png_to_array(img):
-    return np.array(img).astype('float32').reshape(-1)
+    return np.array(img.resize((28, 28), Image.ANTIALIAS)).astype('float32').reshape(-1)
 
 def process_all_pngs(dataset='evaluation'):
     image_paths = get_image_paths(dataset)
     num_images = len(image_paths)
-    image_array = np.zeros((num_images, 11025))
+    image_array = np.zeros((num_images, 784))
 
     for i, path in enumerate(image_paths):
         try:
@@ -28,7 +28,7 @@ def process_all_pngs(dataset='evaluation'):
 
     return image_array
 
-def get_omniglot(processed=True):
+def get_omniglot(shuffle=True):
     h5file = h5py.File('./omniglot.h5')
     bg = np.copy(h5file['background'])
     eval = np.copy(h5file['evaluation'])
@@ -36,9 +36,9 @@ def get_omniglot(processed=True):
 
     X = np.vstack([eval, bg])
 
-    if processed:
-        X -= X.mean(axis=0)
-        X /= (X.std(axis=0) + 0.00001)
+    if shuffle:
+        # X -= X.mean(axis=0)
+        # X /= (X.std(axis=0) + 0.00001)
         np.random.shuffle(X)
 
     return X
