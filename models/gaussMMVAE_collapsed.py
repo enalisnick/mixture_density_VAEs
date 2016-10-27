@@ -13,7 +13,8 @@ def init_mlp(layer_sizes, std=.01):
 def mlp(X, params):
     h = [X]
     for w,b in zip(params['w'][:-1], params['b'][:-1]):
-        h.append( tf.nn.relu( tf.matmul(h[-1], w) + b ) )
+        #h.append( tf.nn.relu( tf.matmul(h[-1], w) + b ) )
+        h.append( tf.nn.tanh( tf.matmul(h[-1], w) + b ) ) 
     return tf.matmul(h[-1], params['w'][-1]) + params['b'][-1]
 
 
@@ -93,7 +94,7 @@ class GaussMMVAE(object):
 
 
     def init_encoder(self, hyperParams):
-        return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d']]), 
+        return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d'], hyperParams['hidden_d']]), 
                 'mu':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
                 'sigma':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
                 'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-8),                
@@ -101,7 +102,7 @@ class GaussMMVAE(object):
 
 
     def init_decoder(self, hyperParams):
-        return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d'], hyperParams['input_d']])
+        return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d'], hyperParams['hidden_d'], hyperParams['input_d']])
 
 
     def f_prop(self):
