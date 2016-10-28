@@ -225,3 +225,96 @@ class GaussMMVAE(object):
             z = self.prior['mu'][k] + tf.mul(self.prior['sigma'][k], tf.random_normal((nImages, tf.shape(self.decoder_params['w'][0])[0]))) 
             samples_from_each_component.append( tf.sigmoid(mlp(z, self.decoder_params)) )
         return samples_from_each_component
+
+
+class DPVAE(GaussMMVAE):
+    def __init__(self, hyperParams):
+
+        self.X = tf.placeholder("float", [None, hyperParams['input_d']])
+        self.prior = hyperParams['prior']
+        self.K = hyperParams['K']
+
+        self.encoder_params = self.init_encoder(hyperParams)
+        self.decoder_params = self.init_decoder(hyperParams)
+
+        self.x_recons_linear = self.f_prop()
+
+        self.elbo_obj = self.get_ELBO()
+
+
+
+    def get_ELBO(self):
+        a_inv = tf.pow(self.kumar_a,-1)
+        b_inv = tf.pow(self.kumar_b,-1)
+
+        # compute Kumaraswamy means                                                                                                                                                             
+        v_means = tf.mul(self.kumar_b, beta_fn(1.+a_inv, self.kumar_b))
+
+        # compute Kumaraswamy samples                                                                                                                                                           
+        uni_samples = tf.random_uniform(tf.shape(v_means), minval=1e-8, maxval=1-1e-8)
+        v_samples = tf.pow(1-tf.pow(uni_samples, b_inv), a_inv)
+
+        # compose into stick segments using pi = v \prod (1-v)                                                                                                                                  
+        self.pi_means = self.compose_stick_segments(v_means)
+        self.pi_samples = self.compose_stick_segments(v_samples)
+
+        # compose elbo                                                                                                                                                                          
+        elbo = tf.mul(self.pi_means[0], -compute_nll(self.X, self.x_recons_linear[0]) + gauss_cross_entropy(self.mu[0], self.sigma[0], self.prior['mu'][0], self.prior['sigma'][0]))
+        for k in xrange(self.K-1):
+            elbo += tf.mul(self.pi_means[k+1], -compute_nll(self.X, self.x_recons_linear[k+1]) \
+                               + gauss_cross_entropy(self.mu[k+1], self.sigma[k+1], self.prior['mu'][k+1], self.prior['sigma'][k+1]))
+            elbo -= compute_kumar2beta_kld(tf.expand_dims(self.kumar_a[:,k],1), tf.expand_dims(self.kumar_b[:,k],1), 1., self.prior['dirichlet_alpha'])
+
+        elbo += mcMixtureEntropy(self.pi_samples, self.z, self.mu, self.sigma, self.K)
+
+        return tf.reduce_mean(elbo)
+
+
+    def get_log_margLL(self, batchSize):
+        a_inv = tf.pow(self.kumar_a,-1)
+        b_inv = tf.pow(self.kumar_b,-1)
+
+        # compute Kumaraswamy samples                                                                                                                                                           
+        uni_samples = tf.random_uniform((tf.shape(a_inv)[0], self.K-1), minval=1e-8, maxval=1-1e-8)
+        v_samples = tf.pow(1-tf.pow(uni_samples, b_inv), a_inv)
+
+        # compose into stick segments using pi = v \prod (1-v)                                                                                                                                  
+        self.pi_samples = self.compose_stick_segments(v_samples)
+
+        # sample a component index                                                                                                                                                              
+        uni_samples = tf.random_uniform((tf.shape(a_inv)[0], self.K), minval=1e-8, maxval=1-1e-8)
+        gumbel_samples = -tf.log(-tf.log(uni_samples))
+        component_samples = tf.to_int32(tf.argmax(tf.log(tf.concat(1, self.pi_samples)) + gumbel_samples, 1))
+
+        # calc likelihood term for chosen components                                                                                                                                            
+        all_ll = []
+        for k in xrange(self.K): all_ll.append(-compute_nll(self.X, self.x_recons_linear[k]))
+        all_ll = tf.concat(1, all_ll)
+
+        component_samples = tf.concat(1, [tf.expand_dims(tf.range(0,batchSize),1), tf.expand_dims(component_samples,1)])
+        ll = tf.gather_nd(all_ll, component_samples)
+        ll = tf.expand_dims(ll,1)
+
+        # calc prior terms                                                                                                                                                                      
+        all_log_gauss_priors = []
+        for k in xrange(self.K):
+            all_log_gauss_priors.append(log_normal_pdf(self.z[k], self.prior['mu'][k], self.prior['sigma'][k]))
+        all_log_gauss_priors = tf.concat(1, all_log_gauss_priors)
+        log_gauss_prior = tf.gather_nd(all_log_gauss_priors, component_samples)
+        log_gauss_prior = tf.expand_dims(log_gauss_prior,1)
+
+        log_beta_prior = log_beta_pdf(tf.expand_dims(v_samples[:,0],1), 1., self.prior['dirichlet_alpha'])
+        for k in xrange(self.K-2):
+            log_beta_prior += log_beta_pdf(tf.expand_dims(v_samples[:,k+1],1), 1., self.prior['dirichlet_alpha'])
+
+        # calc post term                                                            
+        log_kumar_post = log_kumar_pdf(v_samples, self.kumar_a, self.kumar_b)
+
+        all_log_gauss_posts = []
+        for k in xrange(self.K):
+            all_log_gauss_posts.append(log_normal_pdf(self.z[k], self.mu[k], self.sigma[k]))
+        all_log_gauss_posts = tf.concat(1, all_log_gauss_posts)
+        log_gauss_post = tf.gather_nd(all_log_gauss_posts, component_samples)
+        log_gauss_post = tf.expand_dims(log_gauss_post,1)
+
+        return ll + log_beta_prior + log_gauss_prior - log_kumar_post - log_gauss_post

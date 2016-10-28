@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
-from models.gaussMMVAE_collapsed import GaussMMVAE
+from models.gaussMMVAE_collapsed import DPVAE
 from utils.sampling_utils import *
 
 try:
@@ -18,12 +18,12 @@ except ImportError:
 
 # command line arguments
 flags = tf.flags
-flags.DEFINE_integer("batchSize", 20, "batch size.")
+flags.DEFINE_integer("batchSize", 100, "batch size.")
 flags.DEFINE_integer("nEpochs", 500, "number of epochs to train.")
-flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
-flags.DEFINE_integer("hidden_size", 200, "number of hidden units in en/decoder.")
-flags.DEFINE_integer("latent_size", 50, "dimensionality of latent variables.")
-flags.DEFINE_integer("K", 3, "number of components in mixture model.")
+flags.DEFINE_float("adamLr", 5e-4, "AdaM learning rate.")
+flags.DEFINE_integer("hidden_size", 500, "number of hidden units in en/decoder.")
+flags.DEFINE_integer("latent_size", 25, "dimensionality of latent variables.")
+flags.DEFINE_integer("T", 15, "number of components in mixture model.")
 flags.DEFINE_string("experimentDir", "MNIST/", "directory to save training artifacts.")
 inArgs = flags.FLAGS
 
@@ -36,11 +36,11 @@ def get_file_name(expDir, vaeParams, trainParams):
     output_file_base_name += '_adamLR_'+str(trainParams['adamLr'])
                                                                                
     # check if results file already exists, if so, append a number                                                                                               
-    results_file_name = pjoin(expDir, "train_logs/gaussMM_vae_trainResults"+output_file_base_name+".txt")
+    results_file_name = pjoin(expDir, "train_logs/dp_vae_trainResults"+output_file_base_name+".txt")
     file_exists_counter = 0
     while os.path.isfile(results_file_name):
         file_exists_counter += 1
-        results_file_name = pjoin(expDir, "train_logs/gaussMM_vae_trainResults"+output_file_base_name+"_"+str(file_exists_counter)+".txt")
+        results_file_name = pjoin(expDir, "train_logs/dp_vae_trainResults"+output_file_base_name+"_"+str(file_exists_counter)+".txt")
     if file_exists_counter > 0:
         output_file_base_name += "_"+str(file_exists_counter)
 
@@ -57,7 +57,7 @@ def trainVAE(data, vae_hyperParams, hyperParams, param_save_path, logFile=None):
     vae_hyperParams['batchSize'] = hyperParams['batchSize']
 
     # init Mix Density VAE
-    model = GaussMMVAE(vae_hyperParams)
+    model = DPVAE(vae_hyperParams)
 
     # get training op
     optimizer = tf.train.AdamOptimizer(hyperParams['adamLr']).minimize(-model.elbo_obj)
@@ -161,8 +161,8 @@ if __name__ == "__main__":
     np.random.shuffle(mnist['train'])
 
     # set architecture params
-    vae_hyperParams = {'input_d':mnist['train'].shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, \
-                           'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
+    vae_hyperParams = {'input_d':mnist['train'].shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.T, \
+                           'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.T, 'sigma':[1.]*inArgs.T}}
     #'prior':{'dirichlet_alpha':1., 'mu':[-.5, -.25, 0., .25, .5], 'sigma':[1.]*inArgs.K}}
     assert len(vae_hyperParams['prior']['mu']) == len(vae_hyperParams['prior']['sigma']) == vae_hyperParams['K']
 
@@ -173,8 +173,8 @@ if __name__ == "__main__":
     
     # setup files to write results and save parameters
     outfile_base_name = get_file_name(inArgs.experimentDir, vae_hyperParams, train_hyperParams)
-    logging_file = open(inArgs.experimentDir+"train_logs/gaussMM_vae_trainResults"+outfile_base_name+".txt", 'w')
-    param_file_name = inArgs.experimentDir+"params/gaussMM_vae_params"+outfile_base_name+".ckpt"
+    logging_file = open(inArgs.experimentDir+"train_logs/dp_vae_trainResults"+outfile_base_name+".txt", 'w')
+    param_file_name = inArgs.experimentDir+"params/dp_vae_params"+outfile_base_name+".ckpt"
 
     # train
     print "Training model..."
@@ -191,4 +191,4 @@ if __name__ == "__main__":
 
     # draw some samples
     print "Drawing samples..."
-    sample_from_model(model, param_file_name, vae_hyperParams, inArgs.experimentDir+'samples/gaussMM_vae_samples'+outfile_base_name)
+    sample_from_model(model, param_file_name, vae_hyperParams, inArgs.experimentDir+'samples/dp_vae_samples'+outfile_base_name)
