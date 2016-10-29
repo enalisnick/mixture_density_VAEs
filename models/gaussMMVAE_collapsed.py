@@ -3,11 +3,11 @@ import numpy as np
 import tensorflow as tf
 
 ### Base neural network                                                                                                                  
-def init_mlp(layer_sizes, std=.01):
+def init_mlp(layer_sizes, std=.01, bias_init=0.):
     params = {'w':[], 'b':[]}
     for n_in, n_out in zip(layer_sizes[:-1], layer_sizes[1:]):
         params['w'].append(tf.Variable(tf.random_normal([n_in, n_out], stddev=std)))
-        params['b'].append(tf.Variable(tf.zeros([n_out,])))
+        params['b'].append(tf.Variable(tf.mul(bias_init, tf.ones([n_out,]))))
     return params
 
 
@@ -64,6 +64,7 @@ def log_normal_pdf(x, mu, sigma):
 
 def log_beta_pdf(v, alpha, beta):
     return tf.reduce_sum((alpha-1)*tf.log(v) + (beta-1)*tf.log(1-v) - tf.log(beta_fn(alpha,beta)), reduction_indices=1, keep_dims=True)
+
 
 def log_kumar_pdf(v, a, b):
     return tf.reduce_sum(tf.mul(a-1, tf.log(v)) + tf.mul(b-1, tf.log(1-tf.pow(v,a))) + tf.log(a) + tf.log(b), reduction_indices=1, keep_dims=True)
@@ -345,18 +346,18 @@ class DLGMM(GaussMMVAE):
 
 
     def init_encoder(self, hyperParams):
-        return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d']], 0.001),
-                'mu':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']], 0.001) for k in xrange(self.K)],
-                'sigma':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']], 0.001) for k in xrange(self.K)],
-                'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-3),
-                'kumar_b':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-3)}
+        return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d']], 0.00001),
+                'mu':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']], 0.00001) for k in xrange(self.K)],
+                'sigma':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']], 0.00001) for k in xrange(self.K)],
+                'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-5),
+                'kumar_b':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-5)}
 
 
     def init_decoder(self, hyperParams):
         if hyperParams['input_d']:
-            return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d'], hyperParams['input_d']], 0.001)
+            return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d'], hyperParams['input_d']], 0.00001)
         else:
-            return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d']], 0.001)
+            return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d']], 0.00001)
 
 
     def f_prop(self):
@@ -384,8 +385,8 @@ class DLGMM(GaussMMVAE):
             self.mu2.append(mlp(h2, self.encoder_params2['mu'][k]))
             self.sigma2.append(tf.exp(mlp(h2, self.encoder_params2['sigma'][k])))
             self.z2.append(self.mu2[-1] + tf.mul(self.sigma2[-1], tf.random_normal(tf.shape(self.sigma2[-1]))))
-        self.kumar_a2 = tf.exp(mlp(h2, self.encoder_params2['kumar_a']))
-        self.kumar_b2 = tf.exp(mlp(h2, self.encoder_params2['kumar_b']))
+        self.kumar_a2 = tf.nn.softplus(mlp(h2, self.encoder_params2['kumar_a']))
+        self.kumar_b2 = tf.nn.softplus(mlp(h2, self.encoder_params2['kumar_b']))
 
         h3 = []
         for k in xrange(self.K):
@@ -395,8 +396,8 @@ class DLGMM(GaussMMVAE):
         for k in xrange(self.K):
             self.z1.append([])
             self.mu1.append([])
-            self.kumar_a1.append(tf.exp(mlp(h3[k], self.encoder_params1['kumar_a'])))
-            self.kumar_b1.append(tf.exp(mlp(h3[k], self.encoder_params1['kumar_b'])))
+            self.kumar_a1.append(tf.nn.softplus(mlp(h3[k], self.encoder_params1['kumar_a'])))
+            self.kumar_b1.append(tf.nn.softplus(mlp(h3[k], self.encoder_params1['kumar_b'])))
             for j in xrange(self.K):
                 self.mu1[-1].append(mlp(h3[k], self.encoder_params1['mu'][j]))
                 self.z1[-1].append(self.mu1[-1][-1] + tf.mul(self.sigma1[k], tf.random_normal(tf.shape(self.sigma1[k]))))
@@ -421,8 +422,8 @@ class DLGMM(GaussMMVAE):
         v_means2 = tf.mul(self.kumar_b2, beta_fn(1.+a2_inv, self.kumar_b2))
 
         # compute Kumaraswamy samples                                                                                                                  
-        uni_samples1 = [tf.random_uniform(tf.shape(v_means1[k]), minval=1e-5, maxval=1-1e-5) for k in xrange(self.K)]
-        uni_samples2 = tf.random_uniform(tf.shape(v_means2), minval=1e-5, maxval=1-1e-5)
+        uni_samples1 = [tf.random_uniform(tf.shape(v_means1[k]), minval=1e-3, maxval=1-1e-3) for k in xrange(self.K)]
+        uni_samples2 = tf.random_uniform(tf.shape(v_means2), minval=1e-3, maxval=1-1e-3)
         v_samples1 = [tf.pow(1-tf.pow(uni_samples1[k], b1_inv[k]), a1_inv[k]) for k in xrange(self.K)]
         v_samples2 = tf.pow(1-tf.pow(uni_samples2, b2_inv), a2_inv)
 
@@ -439,18 +440,42 @@ class DLGMM(GaussMMVAE):
             for j in xrange(self.K):
                 elbo += tf.mul(tf.mul(self.pi_means2[k], self.pi_means1[k][j]), -compute_nll(self.X, self.x_recons_linear[k][j]))
                 elbo += tf.mul(tf.mul(self.pi_means2[k], self.pi_means1[k][j]), log_normal_pdf(self.z1[k][j], self.prior['mu'][k], self.prior['sigma'][k]))
-        
+
+        '''
+        temp = tf.zeros((tf.shape(a2_inv)[0],1))
         for k in xrange(self.K-1):
-            elbo -= compute_kumar2beta_kld(tf.expand_dims(self.kumar_a2[:,k],1), tf.expand_dims(self.kumar_b2[:,k],1), \
+            temp -= compute_kumar2beta_kld(tf.expand_dims(self.kumar_a2[:,k],1), tf.expand_dims(self.kumar_b2[:,k],1), \
                                                self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
+        elbo += tf.maximum(temp, -100.)
+        
+        for k in xrange(self.K):
+            temp = tf.zeros((tf.shape(a2_inv)[0],1))
+            for j in xrange(self.K-1):
+                temp -= tf.mul(self.pi_means2[k], compute_kumar2beta_kld(tf.expand_dims(self.kumar_a1[k][:,j],1), tf.expand_dims(self.kumar_b1[k][:,j],1), \
+                                               self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha']))
+            elbo += tf.maximum(temp, -100.) 
+        '''
+
+        kl1 = tf.zeros((tf.shape(a2_inv)[0],1))
+        for k in xrange(self.K-1):
+            kl1 += log_beta_pdf(tf.expand_dims(v_samples2[:,k],1), self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha']) \
+                - log_kumar_pdf(tf.expand_dims(v_samples2[:,k],1), tf.expand_dims(self.kumar_a2[:,k],1), tf.expand_dims(self.kumar_b2[:,k],1))
+
+        kl2 = tf.zeros((tf.shape(a2_inv)[0],1))
         for k in xrange(self.K):
             for j in xrange(self.K-1):
-                elbo -= tf.mul(self.pi_means2[k], compute_kumar2beta_kld(tf.expand_dims(self.kumar_a1[k][:,j],1), tf.expand_dims(self.kumar_b1[k][:,j],1), \
-                                               self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha']))
+                kl2 += tf.mul(self.pi_means2[k], log_beta_pdf(tf.expand_dims(v_samples1[k][:,j],1), self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha']) - \
+                log_kumar_pdf(tf.expand_dims(v_samples1[k][:,j],1), tf.expand_dims(self.kumar_a1[k][:,j],1), tf.expand_dims(self.kumar_b1[k][:,j],1)))
+
+    
+        elbo += tf.minimum(tf.maximum(kl1, -100.), 100.)
+        elbo += tf.minimum(tf.maximum(kl2, -100.), 100.)
+
 
         elbo += mcMixtureEntropy(self.pi_samples2, self.z2, self.mu2, self.sigma2, self.K)
         for k in xrange(self.K):
             elbo += tf.mul(self.pi_means2[k], mcMixtureEntropy(self.pi_samples1[k], self.z1[k], self.mu1[k], self.sigma1, self.K))
+
 
         return tf.reduce_mean(elbo)
 

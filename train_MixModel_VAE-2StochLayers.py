@@ -20,7 +20,7 @@ except ImportError:
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
 flags.DEFINE_integer("nEpochs", 500, "number of epochs to train.")
-flags.DEFINE_float("adamLr", 1e-8, "AdaM learning rate.")
+flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 200, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 5, "dimensionality of latent variables.")
 flags.DEFINE_integer("K", 3, "number of components in mixture model.")
@@ -78,19 +78,22 @@ def trainDLGMM(data, vae_hyperParams, hyperParams, param_save_path, logFile=None
             train_elbo = 0.
             for batch_idx in xrange(nTrainBatches):
                 x = data['train'][batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
-                _, elbo_val = s.run([optimizer, model.elbo_obj], {model.X: x})
-                train_elbo += elbo_val
+                _, elbo_val, a, b, p = s.run([optimizer, model.elbo_obj, model.kumar_a1, model.kumar_b1, model.pi_means2], {model.X: x})
+                print elbo_val
+                #print a
+                #print b
+                #print p
+                #exit()
+                train_elbo += elbo_val/nTrainBatches
 
             # validation
             valid_elbo = 0.
             for batch_idx in xrange(nValidBatches):
                 x = data['valid'][batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
-                valid_elbo += s.run(model.elbo_obj, {model.X: x})
+                valid_elbo += s.run(model.elbo_obj, {model.X: x})/nValidBatches
 
             # check for ELBO improvement
             star_printer = ""
-            train_elbo /= nTrainBatches
-            valid_elbo /= nValidBatches
             if valid_elbo > best_elbo: 
                 best_elbo = valid_elbo
                 best_epoch = epoch_idx
