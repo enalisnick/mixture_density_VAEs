@@ -1,3 +1,4 @@
+from copy import deepcopy
 import numpy as np
 import tensorflow as tf
 
@@ -13,8 +14,8 @@ def init_mlp(layer_sizes, std=.01):
 def mlp(X, params):
     h = [X]
     for w,b in zip(params['w'][:-1], params['b'][:-1]):
-        #h.append( tf.nn.relu( tf.matmul(h[-1], w) + b ) )
-        h.append( tf.nn.tanh( tf.matmul(h[-1], w) + b ) ) 
+        h.append( tf.nn.relu( tf.matmul(h[-1], w) + b ) )
+        #h.append( tf.nn.tanh( tf.matmul(h[-1], w) + b ) ) 
     return tf.matmul(h[-1], params['w'][-1]) + params['b'][-1]
 
 
@@ -328,9 +329,12 @@ class DLGMM(GaussMMVAE):
         self.prior = hyperParams['prior']
         self.K = hyperParams['K']
 
+        t_hyperParams = deepcopy(hyperParams)
+        t_hyperParams['input_d'] = t_hyperParams['hidden_d']
         self.encoder_params1 = self.init_encoder(hyperParams)
-        self.encoder_params2 = self.init_encoder(hyperParams)
-        self.decoder_params1 = self.init_decoder(hyperParams)
+        self.encoder_params2 = self.init_encoder(t_hyperParams)
+        t_hyperParams['input_d'] = None
+        self.decoder_params2 = self.init_decoder(t_hyperParams)
         self.decoder_params1 = self.init_decoder(hyperParams)
 
         self.x_recons_linear = self.f_prop()
@@ -341,15 +345,18 @@ class DLGMM(GaussMMVAE):
 
 
     def init_encoder(self, hyperParams):
-        return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d']]),
-                'mu':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
-                'sigma':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']]) for k in xrange(self.K)],
-                'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-8),
-                'kumar_b':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-8)}
+        return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d']], 0.001),
+                'mu':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']], 0.001) for k in xrange(self.K)],
+                'sigma':[init_mlp([hyperParams['hidden_d'], hyperParams['latent_d']], 0.001) for k in xrange(self.K)],
+                'kumar_a':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-3),
+                'kumar_b':init_mlp([hyperParams['hidden_d'], self.K-1], 1e-3)}
 
 
     def init_decoder(self, hyperParams):
-        return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d'], hyperParams['input_d']])
+        if hyperParams['input_d']:
+            return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d'], hyperParams['input_d']], 0.001)
+        else:
+            return init_mlp([hyperParams['latent_d'], hyperParams['hidden_d']], 0.001)
 
 
     def f_prop(self):
@@ -366,9 +373,8 @@ class DLGMM(GaussMMVAE):
 
         h1 = mlp(self.X, self.encoder_params1['base'])
 
-        # compute z1's params
+        # compute z1's sigma params
         for k in xrange(self.K):
-            #self.mu1.append(mlp(h1, self.encoder_params1['mu'][k]))
             self.sigma1.append(tf.exp(mlp(h1, self.encoder_params1['sigma'][k])))
 
         h2 = mlp(h1, self.encoder_params2['base'])
@@ -390,63 +396,65 @@ class DLGMM(GaussMMVAE):
             self.z1.append([])
             self.mu1.append([])
             self.kumar_a1.append(tf.exp(mlp(h3[k], self.encoder_params1['kumar_a'])))
-            self.kumar_b1.append(tf.exp(mlp(h3[k], self.encoder_params1['kumar_a'])))
+            self.kumar_b1.append(tf.exp(mlp(h3[k], self.encoder_params1['kumar_b'])))
             for j in xrange(self.K):
-                self.mu1[-1].append(mlp(self.h3[k], self.encoder_params1['mu'][j]))
+                self.mu1[-1].append(mlp(h3[k], self.encoder_params1['mu'][j]))
                 self.z1[-1].append(self.mu1[-1][-1] + tf.mul(self.sigma1[k], tf.random_normal(tf.shape(self.sigma1[k]))))
         
         # compute KxK reconstructions
         for k in xrange(self.K):
             x_recon_linear.append([])
             for j in xrange(self.K):
-                x_recon_linear[-1].append(mlp(self.z[k][j], self.decoder_params1))
+                x_recon_linear[-1].append(mlp(self.z1[k][j], self.decoder_params1))
 
         return x_recon_linear
 
 
     def get_ELBO(self):
-        a1_inv = tf.pow(self.kumar_a1,-1)
+        a1_inv = [tf.pow(a,-1) for a in self.kumar_a1]
         a2_inv = tf.pow(self.kumar_a2,-1)
-        b1_inv = tf.pow(self.kumar_b1,-1)
+        b1_inv = [tf.pow(b,-1) for b in self.kumar_b1] 
         b2_inv = tf.pow(self.kumar_b2,-1)
 
-        # compute Kumaraswamy means                                                                                                                       
-        v_means1 = tf.mul(self.kumar_b1, beta_fn(1.+a_inv1, self.kumar_b1))
-        v_means2 = tf.mul(self.kumar_b2, beta_fn(1.+a_inv2, self.kumar_b2))
+        # compute Kumaraswamy means                                     
+        v_means1 = [tf.mul(self.kumar_b1[k], beta_fn(1.+a1_inv[k], self.kumar_b1[k])) for k in xrange(self.K)]
+        v_means2 = tf.mul(self.kumar_b2, beta_fn(1.+a2_inv, self.kumar_b2))
 
         # compute Kumaraswamy samples                                                                                                                  
-        uni_samples1 = tf.random_uniform(tf.shape(v_means1), minval=1e-8, maxval=1-1e-8)
-        uni_samples2 = tf.random_uniform(tf.shape(v_means2), minval=1e-8, maxval=1-1e-8)
-        v_samples1 = tf.pow(1-tf.pow(uni_samples1, b1_inv), a1_inv)
+        uni_samples1 = [tf.random_uniform(tf.shape(v_means1[k]), minval=1e-5, maxval=1-1e-5) for k in xrange(self.K)]
+        uni_samples2 = tf.random_uniform(tf.shape(v_means2), minval=1e-5, maxval=1-1e-5)
+        v_samples1 = [tf.pow(1-tf.pow(uni_samples1[k], b1_inv[k]), a1_inv[k]) for k in xrange(self.K)]
         v_samples2 = tf.pow(1-tf.pow(uni_samples2, b2_inv), a2_inv)
 
         # compose into stick segments using pi = v \prod (1-v)                                                                                         
-        self.pi_means1 = self.compose_stick_segments(v_means1)
-        self.pi_samples1 = self.compose_stick_segments(v_samples1)
+        self.pi_means1 = [self.compose_stick_segments(v_means1[k]) for k in xrange(self.K)]
+        self.pi_samples1 = [self.compose_stick_segments(v_samples1[k]) for k in xrange(self.K)]
         self.pi_means2 = self.compose_stick_segments(v_means2)
         self.pi_samples2 = self.compose_stick_segments(v_samples2)
 
         # compose elbo                                                                                
-        elbo = tf.zeros(tf.shape(self.pi_means1[0]))
+        elbo = tf.zeros((tf.shape(a2_inv)[0],1))
         for k in xrange(self.K):
             elbo += tf.mul(self.pi_means2[k], gauss_cross_entropy(self.mu2[k], self.sigma2[k], self.prior['mu'][k], self.prior['sigma'][k]))
             for j in xrange(self.K):
-                elbo += tf.mul(tf.mul(self.pi_means1[k], self.pi_means2[j]), -compute_nll(self.X, self.x_recons_linear[k][j]))
-                elbo += tf.mul(tf.mul(self.pi_means1[k], self.pi_means2[j]), log_normal_pdf(self.z1[k][j], self.mu1[k],[j], self.sigma1[k]))
+                elbo += tf.mul(tf.mul(self.pi_means2[k], self.pi_means1[k][j]), -compute_nll(self.X, self.x_recons_linear[k][j]))
+                elbo += tf.mul(tf.mul(self.pi_means2[k], self.pi_means1[k][j]), log_normal_pdf(self.z1[k][j], self.prior['mu'][k], self.prior['sigma'][k]))
         
         for k in xrange(self.K-1):
-            elbo -= compute_kumar2beta_kld(tf.expand_dims(self.kumar_a1[:,k],1), tf.expand_dims(self.kumar_b1[:,k],1), \
-                                               self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
             elbo -= compute_kumar2beta_kld(tf.expand_dims(self.kumar_a2[:,k],1), tf.expand_dims(self.kumar_b2[:,k],1), \
                                                self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha'])
+        for k in xrange(self.K):
+            for j in xrange(self.K-1):
+                elbo -= tf.mul(self.pi_means2[k], compute_kumar2beta_kld(tf.expand_dims(self.kumar_a1[k][:,j],1), tf.expand_dims(self.kumar_b1[k][:,j],1), \
+                                               self.prior['dirichlet_alpha'], (self.K-1-k)*self.prior['dirichlet_alpha']))
 
         elbo += mcMixtureEntropy(self.pi_samples2, self.z2, self.mu2, self.sigma2, self.K)
         for k in xrange(self.K):
-            elbo += tf.mul(self.pi_means2[k], mcMixtureEntropy(self.pi_samples1, self.z1[k], self.mu1[k], self.sigma, self.K))
+            elbo += tf.mul(self.pi_means2[k], mcMixtureEntropy(self.pi_samples1[k], self.z1[k], self.mu1[k], self.sigma1, self.K))
 
         return tf.reduce_mean(elbo)
 
-
+    '''
     def get_log_margLL(self, batchSize):
         a_inv1 = tf.pow(self.kumar_a1,-1)
         b_inv1 = tf.pow(self.kumar_b1,-1)
@@ -497,3 +505,4 @@ class DLGMM(GaussMMVAE):
         log_gauss_post = tf.expand_dims(log_gauss_post,1)
 
         return ll + log_beta_prior + log_gauss_prior - log_kumar_post - log_gauss_post
+'''
