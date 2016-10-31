@@ -19,8 +19,8 @@ except ImportError:
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 100, "batch size.")
-flags.DEFINE_integer("nEpochs", 500, "number of epochs to train.")
-flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
+flags.DEFINE_integer("nEpochs", 1, "number of epochs to train.")
+flags.DEFINE_float("adamLr", 1e-3, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 200, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 5, "dimensionality of latent variables.")
 flags.DEFINE_integer("K", 3, "number of components in mixture model.")
@@ -78,12 +78,7 @@ def trainDLGMM(data, vae_hyperParams, hyperParams, param_save_path, logFile=None
             train_elbo = 0.
             for batch_idx in xrange(nTrainBatches):
                 x = data['train'][batch_idx*hyperParams['batchSize']:(batch_idx+1)*hyperParams['batchSize'],:]
-                _, elbo_val, a, b, p = s.run([optimizer, model.elbo_obj, model.kumar_a1, model.kumar_b1, model.pi_means2], {model.X: x})
-                print elbo_val
-                #print a
-                #print b
-                #print p
-                #exit()
+                _, elbo_val = s.run([optimizer, model.elbo_obj], {model.X: x})
                 train_elbo += elbo_val/nTrainBatches
 
             # validation
@@ -184,12 +179,12 @@ if __name__ == "__main__":
     model = trainDLGMM(mnist, vae_hyperParams, train_hyperParams, param_file_name, logging_file)
 
     # evaluate marginal likelihood
-    #print "Calculating the marginal likelihood..."
-    #margll_valid = calc_margLikelihood(mnist['valid'], model, param_file_name, vae_hyperParams) 
-    #margll_test = calc_margLikelihood(mnist['test'], model, param_file_name, vae_hyperParams)
-    #logging_str = "\n\nValidation Marginal Likelihood: %.3f,  Test Marginal Likelihood: %.3f" %(margll_valid, margll_test)
-    #print logging_str
-    #logging_file.write(logging_str+"\n")
+    print "Calculating the marginal likelihood..."
+    margll_valid = calc_margLikelihood(mnist['valid'], model, param_file_name, vae_hyperParams) 
+    margll_test = calc_margLikelihood(mnist['test'], model, param_file_name, vae_hyperParams)
+    logging_str = "\n\nValidation Marginal Likelihood: %.3f,  Test Marginal Likelihood: %.3f" %(margll_valid, margll_test)
+    print logging_str
+    logging_file.write(logging_str+"\n")
     logging_file.close()
 
     # draw some samples
