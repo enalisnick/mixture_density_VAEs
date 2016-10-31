@@ -92,8 +92,6 @@ class GaussMMVAE(object):
 
         self.elbo_obj = self.get_ELBO()
 
-        #self.batch_log_margLL = self.get_log_margLL(hyperParams['batchSize'])
-
 
     def init_encoder(self, hyperParams):
         return {'base':init_mlp([hyperParams['input_d'], hyperParams['hidden_d'], hyperParams['hidden_d']]), 
@@ -230,7 +228,7 @@ class GaussMMVAE(object):
         return samples_from_each_component
 
 
-     def get_component_samples(self, latent_dim, batchSize):
+    def get_component_samples(self, latent_dim, batchSize):
         a_inv = tf.pow(self.kumar_a,-1)
         b_inv = tf.pow(self.kumar_b,-1)
 
@@ -352,6 +350,8 @@ class DLGMM(GaussMMVAE):
 
         t_hyperParams = deepcopy(hyperParams)
         t_hyperParams['input_d'] = t_hyperParams['hidden_d']
+        #t_hyperParams['hidden_d'] /= 2
+        t_hyperParams['latent_d'] /= 2
         self.encoder_params1 = self.init_encoder(hyperParams)
         self.encoder_params2 = self.init_encoder(t_hyperParams)
         t_hyperParams['input_d'] = None
@@ -429,10 +429,10 @@ class DLGMM(GaussMMVAE):
                 x_recon_linear[-1].append(mlp(self.z1[k][j], self.decoder_params1))
 
         # clip kumar params
-        #self.kumar_a1 = [tf.maximum(tf.minimum(a, 50.), .001) for a in self.kumar_a1]
-        #self.kumar_b1 = [tf.maximum(tf.minimum(b, 50.), .001) for b in self.kumar_b1]
-        #self.kumar_a2 = tf.maximum(tf.minimum(self.kumar_a2, 50.), .001)
-        #self.kumar_b2 = tf.maximum(tf.minimum(self.kumar_b2, 50.), .001)
+        self.kumar_a1 = [tf.maximum(tf.minimum(a, 50.), .001) for a in self.kumar_a1]
+        self.kumar_b1 = [tf.maximum(tf.minimum(b, 50.), .001) for b in self.kumar_b1]
+        self.kumar_a2 = tf.maximum(tf.minimum(self.kumar_a2, 50.), .001)
+        self.kumar_b2 = tf.maximum(tf.minimum(self.kumar_b2, 50.), .001)
 
         return x_recon_linear
 

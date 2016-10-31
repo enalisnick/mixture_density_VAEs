@@ -1,0 +1,3 @@
+Epoch 1.  Train ELBO: -542.670,  Validation ELBO: -535.918 ***
+Epoch 2.  Train ELBO: -521.110,  Validation ELBO: -500.386 ***
+Epoch 3.  Train ELBO: -390.281,  Validation ELBO: -305.201 ***
