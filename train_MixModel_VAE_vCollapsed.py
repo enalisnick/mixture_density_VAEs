@@ -19,11 +19,11 @@ except ImportError:
 # command line arguments
 flags = tf.flags
 flags.DEFINE_integer("batchSize", 20, "batch size.")
-flags.DEFINE_integer("nEpochs", 500, "number of epochs to train.")
+flags.DEFINE_integer("nEpochs", 1, "number of epochs to train.")
 flags.DEFINE_float("adamLr", 1e-4, "AdaM learning rate.")
 flags.DEFINE_integer("hidden_size", 200, "number of hidden units in en/decoder.")
 flags.DEFINE_integer("latent_size", 50, "dimensionality of latent variables.")
-flags.DEFINE_integer("K", 3, "number of components in mixture model.")
+flags.DEFINE_integer("K", 5, "number of components in mixture model.")
 flags.DEFINE_string("experimentDir", "MNIST/", "directory to save training artifacts.")
 inArgs = flags.FLAGS
 

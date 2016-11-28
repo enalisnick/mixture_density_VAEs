@@ -234,14 +234,14 @@ class GaussMMVAE(object):
 
         # compose into stick segments using pi = v \prod (1-v)
         v_means = tf.mul(self.kumar_b, beta_fn(1.+a_inv, self.kumar_b))
-        components = tf.argmax(self.compose_stick_segments(v_means), 1)
+        components = tf.to_int32(tf.argmax(tf.concat(1, self.compose_stick_segments(v_means)), 1))
         components = tf.concat(1, [tf.expand_dims(tf.range(0,batchSize),1), tf.expand_dims(components,1)])
 
         # sample a z
         all_z = []
         for d in xrange(latent_dim):
             temp_z = tf.concat(1, [tf.expand_dims(self.z[k][:, d],1) for k in xrange(self.K)])
-            all_z.append(tf.gather_nd(temp_z, components))
+            all_z.append(tf.expand_dims(tf.gather_nd(temp_z, components),1))
 
         return tf.concat(1, all_z)
 
@@ -429,10 +429,10 @@ class DLGMM(GaussMMVAE):
                 x_recon_linear[-1].append(mlp(self.z1[k][j], self.decoder_params1))
 
         # clip kumar params
-        self.kumar_a1 = [tf.maximum(tf.minimum(a, 50.), .001) for a in self.kumar_a1]
-        self.kumar_b1 = [tf.maximum(tf.minimum(b, 50.), .001) for b in self.kumar_b1]
-        self.kumar_a2 = tf.maximum(tf.minimum(self.kumar_a2, 50.), .001)
-        self.kumar_b2 = tf.maximum(tf.minimum(self.kumar_b2, 50.), .001)
+        self.kumar_a1 = [tf.maximum(tf.minimum(a, 18.), .1) for a in self.kumar_a1]
+        self.kumar_b1 = [tf.maximum(tf.minimum(b, 18.), .1) for b in self.kumar_b1]
+        self.kumar_a2 = tf.maximum(tf.minimum(self.kumar_a2, 18.), .1)
+        self.kumar_b2 = tf.maximum(tf.minimum(self.kumar_b2, 18.), .1)
 
         return x_recon_linear
 

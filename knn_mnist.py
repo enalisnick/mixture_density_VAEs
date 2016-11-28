@@ -9,7 +9,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from models.gaussMMVAE_collapsed import GaussMMVAE
 from utils.sampling_utils import *
-from train_MixModel_VAE-vCollapsed import *
+from train_MixModel_VAE_vCollapsed import *
 
 try:
     import PIL.Image as Image
@@ -123,6 +123,7 @@ if __name__ == "__main__":
     vae_hyperParams = {'input_d':mnist['train'].shape[1], 'hidden_d':inArgs.hidden_size, 'latent_d':inArgs.latent_size, 'K':inArgs.K, \
                            'prior':{'dirichlet_alpha':1., 'mu':[-0.5, -.2, 0., .2, 0.5], 'sigma':[1.]*inArgs.K}}
     #'prior':{'dirichlet_alpha':1., 'mu':[0.]*inArgs.K, 'sigma':[1.]*inArgs.K}}
+    vae_hyperParams['K']=5
     assert len(vae_hyperParams['prior']['mu']) == len(vae_hyperParams['prior']['sigma']) == vae_hyperParams['K']
 
     # set training hyperparameters
@@ -140,7 +141,7 @@ if __name__ == "__main__":
 
     # train
     print "Load model..."
-    model = trainVAE(mnist, vae_hyperParams, train_hyperParams, param_file_name, logging_file, train=False)
+    model = trainVAE(mnist, vae_hyperParams, train_hyperParams, param_file_name, logging_file)
 
 
     z_samples = get_embedding_samples(mnist['valid'], model, param_file_name, vae_hyperParams, hyperParams=train_hyperParams)
