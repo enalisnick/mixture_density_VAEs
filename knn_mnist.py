@@ -9,7 +9,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from models.gaussMMVAE_collapsed import GaussMMVAE
 from utils.sampling_utils import *
-from mnistMMVAE import *
+from train_MixModel_VAE-vCollapsed import *
 
 try:
     import PIL.Image as Image
