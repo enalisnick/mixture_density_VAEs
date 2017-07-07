@@ -1,3 +1,3 @@
 # Mixture Density VAEs
 
-This repository contains implementations of variational autoencoders with Gaussian mixture latent spaces (finite or truncated infinite).  Models and experiments are described in our workshop paper ''Approximate Inference for Deep Latent Gaussian Mixtures''.
+This repository contains implementations of variational autoencoders with Gaussian mixture latent spaces (finite or truncated infinite).  Models and experiments are described in our workshop paper [*Approximate Inference for Deep Latent Gaussian Mixtures*](http://www.ics.uci.edu/~enalisni/BDL_paper20.pdf).
